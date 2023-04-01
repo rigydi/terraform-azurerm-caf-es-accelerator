@@ -13,8 +13,16 @@ FILE_VARIABLES="variables.tf"
 FILE_TFVARS="terraform.tfvars"
 FILE_SETTINGS="settings.yaml"
 
+BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
+BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
+BACKEND_RESOURCE_GROUP_NAME=$(yq '.settings.backend.resource_group_name' $FILE_SETTINGS)
+BACKEND_STORAGE_ACCOUNT_NAME=$(yq '.settings.backend.storage_account_name' $FILE_SETTINGS)
+BACKEND_CONTAINER_NAME=$(yq '.settings.backend.container_name' $FILE_SETTINGS)
+BACKEND_STATE_FILENAME=$(yq '.settings.backend.key' $FILE_SETTINGS)
+
 ROOT_ID=$(yq '.settings.core.root_id' $FILE_SETTINGS)
 ROOT_NAME=$(yq '.settings.core.root_name' $FILE_SETTINGS)
+DEFAULT_LOCATION=$(yq '.settings.core.default_location' $FILE_SETTINGS)
 
 CONNECTIVITY_DEPLOY=$(yq '.settings.connectivity.deploy' $FILE_SETTINGS)
 CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.connectivity.subscription_id' $FILE_SETTINGS)
@@ -50,6 +58,7 @@ clean_up () {
 #   clean_up
 # fi
 
+echo "Cleaning up files."
 clean_up
 
 ###########################################
@@ -58,7 +67,7 @@ clean_up
 
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
-echo "Creating terraform.tf."
+echo "Creating provider restrictions."
 cat <<EOF > $FILE_PROVIDERS
 terraform {
   required_providers {
@@ -66,6 +75,15 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= $AZURERM_LATEST_VERSION"
     }
+  }
+
+  backend "azurerm" {
+    tenant_id = "$BACKEND_TENANT_ID"
+    subscription_id = "$BACKEND_SUBSCRIPTION_ID"
+    resource_group_name = "$BACKEND_RESOURCE_GROUP_NAME"
+    storage_account_name = "$BACKEND_STORAGE_ACCOUNT_NAME"
+    container_name = "$BACKEND_CONTAINER_NAME"
+    key = "$BACKEND_STATE_FILENAME"
   }
 }
 EOF
@@ -75,7 +93,7 @@ EOF
 # Create FILE_VARIABLES
 ###########################################
 
-echo "Creating variables.tf."
+echo "Creating variables file."
 
 cat <<EOF > $FILE_VARIABLES
 variable "root_id" {
@@ -89,6 +107,12 @@ variable "root_name" {
   type        = string
   default     = "$ROOT_NAME"
 }
+
+variable "default_location" {
+  type        = string
+  description = "If specified, will set the Azure region in which region bound resources will be deployed. Please see: https://azure.microsoft.com/en-gb/global-infrastructure/geographies/"
+  default     = "$DEFAULT_LOCATION"
+}
 EOF
 
 
@@ -98,7 +122,7 @@ EOF
 
 ES_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
-echo "Creating main.tf."
+echo "Creating main file."
 
 cat <<EOF > $FILE_MAIN
 data "azurerm_client_config" "core" {}
@@ -114,6 +138,8 @@ module "enterprise_scale" {
   }
 
   root_parent_id = data.azurerm_client_config.core.tenant_id
+  root_id = var.root_id
+  default_location = var.default_location
 EOF
 
 
@@ -134,6 +160,7 @@ provider "azurerm" {
 }
 EOF
 
+  echo "Creating connectivity data source."
   cat <<EOF >> tmp.txt
 data "azurerm_client_config" "connectivity" {
   provider = azurerm.connectivity
@@ -143,6 +170,8 @@ EOF
 
 cat $FILE_MAIN >> tmp.txt
 mv tmp.txt $FILE_MAIN
+  
+echo "Adding subscription_id_connectivity to main file."
 echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FILE_MAIN
 fi
 
@@ -159,6 +188,7 @@ provider "azurerm" {
 }
 EOF
 
+  echo "Creating management data source."
   cat <<EOF >> tmp.txt
 data "azurerm_client_config" "management" {
   provider = azurerm.management
@@ -168,6 +198,8 @@ EOF
 
 cat $FILE_MAIN >> tmp.txt
 mv tmp.txt $FILE_MAIN
+
+echo "Adding subscription_id_management to main file."
 echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FILE_MAIN
 fi
 
@@ -176,7 +208,7 @@ fi
 ###########################################
 
 if [ "$CONNECTIVITY_DEPLOY" == true ]; then
-  echo "Adding variable: deploy_connectivity_resources."
+  echo "Adding deploy_connectivity_resources to variable file."
   cat <<EOF >> $FILE_VARIABLES
 
 variable "deploy_connectivity_resources" {
@@ -186,7 +218,7 @@ variable "deploy_connectivity_resources" {
 }
 EOF
 else
-  echo "Adding variable: deploy_connectivity_resources."
+  echo "Adding deploy_connectivity_resources to variable file."
   cat <<EOF >> $FILE_VARIABLES
 
 variable "deploy_connectivity_resources" {
@@ -197,10 +229,11 @@ variable "deploy_connectivity_resources" {
 EOF
 fi
 
+echo "Adding deploy_connectivity_resources to main file."
 echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FILE_MAIN
 
 if [ "$MANAGEMENT_DEPLOY" == true ]; then
-  echo "Adding variable: deploy_management_resources."
+  echo "Adding deploy_management_resources to variable file."
   cat <<EOF >> $FILE_VARIABLES
 
 variable "deploy_management_resources" {
@@ -210,7 +243,7 @@ variable "deploy_management_resources" {
 }
 EOF
 else
-  echo "Adding variable: deploy_management_resources."
+  echo "Adding deploy_management_resources to variable file."
   cat <<EOF >> $FILE_VARIABLES
 
 variable "deploy_management_resources" {
@@ -221,6 +254,7 @@ variable "deploy_management_resources" {
 EOF
 fi
 
+echo "Adding deploy_management_resources to main file."
 echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MAIN
 
 
@@ -229,7 +263,9 @@ echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MA
 ###########################################
 
 # Add closing bracket to FILE_MAIN
+echo "Adding closing bracket to main file."
 echo "}" >> $FILE_MAIN
 
 # Format all Terraform files
+echo "Formatting all Terraform files."
 terraform fmt > /dev/null 2>&1
