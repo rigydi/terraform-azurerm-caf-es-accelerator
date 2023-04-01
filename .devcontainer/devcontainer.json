@@ -1,0 +1,8 @@
+{
+	"name": "Terraform-Azure-Launchpad",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-20.04",
+	"features": {
+		"ghcr.io/devcontainers/features/terraform:1":{}
+	},
+	"postCreateCommand": "sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq"
+}

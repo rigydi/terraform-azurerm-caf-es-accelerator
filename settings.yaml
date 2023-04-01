@@ -1,0 +1,10 @@
+settings:
+  core:
+    root_id: "contoso"
+    root_name: "Contoso Ltd."
+  connectivity:
+    deploy: true
+    subscription_id: "connectivitysdfasfdasd"
+  management:
+    deploy: true
+    subscription_id: "managementasdfasdfasdf"

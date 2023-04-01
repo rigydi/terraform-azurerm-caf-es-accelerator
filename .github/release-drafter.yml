@@ -1,0 +1,57 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🔨 Breaking Changes'
+    labels:
+      - 'breaking change'
+  - title: '🚀 Features'
+    labels:
+      - 'enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+
+change-title-escapes: '\<*_&'
+
+template: |
+  ## Changes
+
+  $CHANGES
+
+exclude-labels:
+  - duplicate
+
+exclude-authors:
+  - dependabot[bot]
+
+autolabeler:
+  - label: 'chore'
+    body:
+      - '/chore/i'
+  - label: 'bug'
+    body:
+      - '/bug/i'
+  - label: 'enhancement'
+    body:
+      - '/enhancement/i'
+  - label: 'breaking change'
+    body:
+      - '/breaking change/i'
+
+version-resolver:
+  major:
+    labels:
+      - 'breaking change'
+  minor:
+    labels:
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
+  default: patch
