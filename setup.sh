@@ -79,6 +79,10 @@ terraform {
     }
   }
 }
+
+provider "azurerm" {
+  features {}
+}
 EOF
 
 if [ "$BACKEND_CONFIGURE" == true ]; then
@@ -126,7 +130,7 @@ EOF
 
 
 ###########################################
-# Create basic FILE_MAIN
+# Create default
 ###########################################
 
 ES_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name" | sed 's/v//g')
@@ -266,6 +270,42 @@ fi
 echo "Adding deploy_management_resources to main file."
 echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MAIN
 
+
+###########################################
+# Custom Management Groups
+###########################################
+
+echo "" >> $FILE_MAIN
+
+# Read the yaml file and convert it to JSON
+YAML_FILE=$FILE_SETTINGS
+JSON_FILE="settings.json"
+yq eval -j "$YAML_FILE" > "$JSON_FILE"
+
+# Loop through the custom management groups and map the values to the fields
+custom_landing_zones="custom_landing_zones = {\n"
+for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE"); do
+  id=$(jq -r ".settings.custom_management_groups.$group.id" "$JSON_FILE")
+  display_name=$(jq -r ".settings.custom_management_groups.$group.display_name" "$JSON_FILE")
+  parent_id=$(jq -r ".settings.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
+  subscription_ids=$(jq -c ".settings.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+  if [ -n "$id" ]; then
+    custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
+    custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
+    custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}-$parent_id\"\n"
+    custom_landing_zones+="    subscription_ids = $subscription_ids\n"
+    custom_landing_zones+="    archetype_config = {\n"
+    custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
+    custom_landing_zones+="      parameters     = {}\n"
+    custom_landing_zones+="      access_control = {}\n"
+    custom_landing_zones+="    }\n"
+    custom_landing_zones+="  }\n"
+  fi
+done
+custom_landing_zones+="}"
+
+rm $JSON_FILE > /dev/null 2>&1
+echo -e "$custom_landing_zones" >> $FILE_MAIN
 
 ###########################################
 # Post steps

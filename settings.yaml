@@ -1,17 +1,17 @@
 settings:
   backend:
     # Add backend configuration? (true/false).
-    configure: true
+    configure: false
     # The AAD tenant ID to which the subscription is connected containing the backend storage account.
-    tenant_id: "tenant_idasdfasdf"
+    tenant_id: ""
     # The subscription ID in which the backend storage account is deployed.
-    subscription_id: "subsc_idasdfasdf"
+    subscription_id: ""
     # The resource group in which the backend storage account is located.
-    resource_group_name: "rg-asdfasdf"
+    resource_group_name: ""
     # The storage account name in which the BLOB container is located for storing the Terraform state file.
-    storage_account_name: "strasdfasdf"
+    storage_account_name: ""
     # The blob container name in which the Terraform state file will be stored.
-    container_name: "containerasdfasdf"
+    container_name: ""
     # The name of the Terraform state file.
     key: "terraform-caf-es.tfstate"
   core:
@@ -23,21 +23,21 @@ settings:
     default_location: "westeurope"
   connectivity:
     # Default value for deploy_connectivity_resources variable will be either true or false.
-    deploy: true
+    deploy: false
     # The connectivitiy subscription ID.
-    subscription_id: "connectsubscr"
+    subscription_id: ""
   management:
     # Default value for deploy_management_resources variable will be either true or false.
-    deploy: true
+    deploy: false
     # The management subscription ID.
-    subscription_id: "managesubsc"
+    subscription_id: ""
   custom_management_groups:
     group1:
-      # The ID (name) of the parent management group. The IDs (names) can be found here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. es_connectivity.
+      # The ID (name) of the parent management group. The IDs (names) can be found here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
       parent_management_group_id: ""
       # The name of the management group used as an identifier, e.g. own-management-group-1
-      id: "own-management-group-1"
+      id: "customgroup"
       # The display name of the custom management group
-      display_name: "zone1 display name"
+      display_name: "Custom Mgmt. Group"
       # A list of subscription IDs connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]
       subscription_ids: [""]
