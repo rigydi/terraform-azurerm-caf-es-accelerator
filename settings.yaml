@@ -1,5 +1,7 @@
 settings:
   backend:
+    # Add backend configuration? (true/false).
+    configure: true
     # The AAD tenant ID to which the subscription is connected containing the backend storage account.
     tenant_id: "tenant_idasdfasdf"
     # The subscription ID in which the backend storage account is deployed.
@@ -20,20 +22,22 @@ settings:
     # The default Azure region used for all resources, e.g. "westeurope"
     default_location: "westeurope"
   connectivity:
-    # Affects the default setting of the deploy_connectivity_resources variable. Will be either true or false.
-    deploy: true/false
+    # Default value for deploy_connectivity_resources variable will be either true or false.
+    deploy: true
     # The connectivitiy subscription ID.
-    subscription_id: ""
+    subscription_id: "connectsubscr"
   management:
-    # (true/false) Affects the default setting of the deploy_management_resources variable. Will be either true or false.
-    deploy: true/false
+    # Default value for deploy_management_resources variable will be either true or false.
+    deploy: true
     # The management subscription ID.
-    subscription_id: ""
+    subscription_id: "managesubsc"
   custom_management_groups:
-    zone1:
+    group1:
+      # The ID (name) of the parent management group. The IDs (names) can be found here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. es_connectivity.
+      parent_management_group_id: ""
+      # The name of the management group used as an identifier, e.g. own-management-group-1
+      id: "own-management-group-1"
       # The display name of the custom management group
-      display_name:
-      # The ID of the parent management group.
-      parent_management_group_id:
-      # A list of subscription IDs connected to this management group.
-      subscription_ids: ["",""]
+      display_name: "zone1 display name"
+      # A list of subscription IDs connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]
+      subscription_ids: [""]

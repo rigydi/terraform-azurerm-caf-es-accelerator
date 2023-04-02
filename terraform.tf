@@ -5,7 +5,9 @@ terraform {
       version = ">= 3.50.0"
     }
   }
+}
 
+terraform {
   backend "azurerm" {
     tenant_id            = "tenant_idasdfasdf"
     subscription_id      = "subsc_idasdfasdf"
@@ -14,4 +16,16 @@ terraform {
     container_name       = "containerasdfasdf"
     key                  = "terraform-caf-es.tfstate"
   }
+}
+
+provider "azurerm" {
+  alias           = "connectivity"
+  subscription_id = "connectsubscr"
+  features {}
+}
+
+provider "azurerm" {
+  alias           = "management"
+  subscription_id = "managesubsc"
+  features {}
 }

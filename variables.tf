@@ -19,11 +19,11 @@ variable "default_location" {
 variable "deploy_connectivity_resources" {
   type        = bool
   description = "If set to true, will enable the \"Connectivity\" landing zone settings and add \"Connectivity\" resources into the current Subscription context."
-  default     = false
+  default     = true
 }
 
 variable "deploy_management_resources" {
   type        = bool
   description = "If set to true, will enable the \"Management\" landing zone settings and add \"Management\" resources into the current Subscription context."
-  default     = false
+  default     = true
 }

@@ -30,6 +30,8 @@ CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.connectivity.subscription_id' $FILE
 MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
 
+BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
+
 ###########################################
 # Functions
 ###########################################
@@ -68,7 +70,7 @@ clean_up
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
 echo "Creating provider restrictions."
-cat <<EOF > $FILE_PROVIDERS
+cat <<EOF >> $FILE_PROVIDERS
 terraform {
   required_providers {
     azurerm = {
@@ -76,7 +78,13 @@ terraform {
       version = ">= $AZURERM_LATEST_VERSION"
     }
   }
+}
+EOF
 
+if [ "$BACKEND_CONFIGURE" == true ]; then
+cat <<EOF >> $FILE_PROVIDERS
+
+terraform {
   backend "azurerm" {
     tenant_id = "$BACKEND_TENANT_ID"
     subscription_id = "$BACKEND_SUBSCRIPTION_ID"
@@ -87,6 +95,7 @@ terraform {
   }
 }
 EOF
+fi
 
 
 ###########################################
