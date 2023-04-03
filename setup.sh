@@ -217,7 +217,7 @@ echo "subscription_id_management = data.azurerm_client_config.management.subscri
 fi
 
 ###########################################
-# <>_DEPLOY conditions
+# CONNECTIVITY_DEPLOY
 ###########################################
 
 if [ "$CONNECTIVITY_DEPLOY" == true ]; then
@@ -244,6 +244,10 @@ fi
 
 echo "Adding deploy_connectivity_resources to main file."
 echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FILE_MAIN
+
+###########################################
+# MANAGEMENT_DEPLOY
+###########################################
 
 if [ "$MANAGEMENT_DEPLOY" == true ]; then
   echo "Adding deploy_management_resources to variable file."

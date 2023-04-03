@@ -1,31 +1,32 @@
 settings:
   backend:
-    configure: (true/false)
-    tenant_id: ""
-    subscription_id: ""
-    resource_group_name: ""
-    storage_account_name: ""
-    container_name: ""
+    configure:
+    tenant_id:
+    subscription_id:
+    resource_group_name:
+    storage_account_name:
+    container_name:
     key: "terraform-caf-es.tfstate"
   core:
-    root_id: ""
-    root_name: ""
-    default_location: ""
+    root_id:
+    root_name:
+    default_location:
   connectivity:
-    deploy: (true/false)
-    subscription_id: ""
+    deploy:
+    subscription_id:
   management:
-    deploy: (true/false)
-    subscription_id: ""
+    deploy:
+    subscription_id:
   custom_management_groups:
-    group:
-      parent_management_group_id: ""
-      id: ""
-      display_name: ""
-      subscription_ids: [""]
+    group1:
+      parent_management_group_id:
+      id:
+      display_name:
+      subscription_ids:
 
-
-# The following paragraphs explain the various inputs.
+########################################################
+# Documentation
+########################################################
 
 ##################
 # backend (Optional)
@@ -63,4 +64,4 @@ settings:
 # parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
 # id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1
 # display_name: (Required) The display name (string) of the custom management group
-# subscription_ids: (Optional) A list of subscription IDs (list of strings) connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]
+# subscription_ids: (Optional) A list of subscription IDs (list of strings) connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]. Leave blank, if no subscriptions should be connected to this management group.
