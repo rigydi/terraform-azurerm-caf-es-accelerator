@@ -1,43 +1,66 @@
 settings:
   backend:
-    # Add backend configuration? (true/false).
-    configure: false
-    # The AAD tenant ID to which the subscription is connected containing the backend storage account.
+    configure: (true/false)
     tenant_id: ""
-    # The subscription ID in which the backend storage account is deployed.
     subscription_id: ""
-    # The resource group in which the backend storage account is located.
     resource_group_name: ""
-    # The storage account name in which the BLOB container is located for storing the Terraform state file.
     storage_account_name: ""
-    # The blob container name in which the Terraform state file will be stored.
     container_name: ""
-    # The name of the Terraform state file.
     key: "terraform-caf-es.tfstate"
   core:
-    # The name of the top management group, which will be created, under which all subsequent Managemet Groups will be created, e.g. "mycompany"
-    root_id: "contoso"
-    # The Display name of the top Management Group, e.g. "My Company Ltd."
-    root_name: "Contoso Ltd."
-    # The default Azure region used for all resources, e.g. "westeurope"
-    default_location: "westeurope"
+    root_id: ""
+    root_name: ""
+    default_location: ""
   connectivity:
-    # Default value for deploy_connectivity_resources variable will be either true or false.
-    deploy: false
-    # The connectivitiy subscription ID.
+    deploy: (true/false)
     subscription_id: ""
   management:
-    # Default value for deploy_management_resources variable will be either true or false.
-    deploy: false
-    # The management subscription ID.
+    deploy: (true/false)
     subscription_id: ""
   custom_management_groups:
-    group1:
-      # The ID (name) of the parent management group. The IDs (names) can be found here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
+    group:
       parent_management_group_id: ""
-      # The name of the management group used as an identifier, e.g. own-management-group-1
-      id: "customgroup"
-      # The display name of the custom management group
-      display_name: "Custom Mgmt. Group"
-      # A list of subscription IDs connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]
+      id: ""
+      display_name: ""
       subscription_ids: [""]
+
+
+# The following paragraphs explain the various inputs.
+
+##################
+# backend (Optional)
+##################
+# configure: (Optional) Decision (bool: true/false) to add backend configuration.
+# tenant_id: (Required) The AAD tenant ID (string) to which the subscription is connected containing the backend storage account.
+# subscription_id: (Required) The subscription ID (string) in which the backend storage account is deployed.
+# resource_group_name: (Required) The resource group (string) in which the backend storage account is located.
+# storage_account_name: (Required) The storage account name (string) in which the blob container is located for storing the Terraform state file.
+# container_name: (Required) The blob container name in which the Terraform state file will be stored.
+# key: (Required) The name (string) of the Terraform state file.
+
+##################
+# core (Required)
+##################
+# root_id: (Required) The name (string) of the top management group, which will be created, under which all subsequent Managemet Groups will be created, e.g. "mycompany"
+# root_name: (Required) The Display name (string) of the top Management Group, e.g. "My Company Ltd."
+# default_location: (Required) The default Azure region used for all resources, e.g. "westeurope"
+
+##################
+# connectivity (Optional)
+##################
+# deploy: (Required) Changes the default value (bool: true/false) of variable deploy_connectivity_resources variable.
+# subscription_id: (Required) The connectivitiy subscription ID (string).
+
+##################
+# management (Optional)
+##################
+# deploy: Changes the default value (bool: true/false) of variable deploy_management_resources variable.
+# subscription_id: The management subscription ID (string).
+
+##################
+# custom management groups (Optional)
+################## 
+# parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
+# id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1
+# display_name: (Required) The display name (string) of the custom management group
+# subscription_ids: (Optional) A list of subscription IDs (list of strings) connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]

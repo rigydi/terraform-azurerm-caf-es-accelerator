@@ -280,7 +280,7 @@ echo "" >> $FILE_MAIN
 # Read the yaml file and convert it to JSON
 YAML_FILE=$FILE_SETTINGS
 JSON_FILE="settings.json"
-yq eval -j "$YAML_FILE" > "$JSON_FILE"
+yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 
 # Loop through the custom management groups and map the values to the fields
 custom_landing_zones="custom_landing_zones = {\n"
@@ -289,6 +289,7 @@ for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE")
   display_name=$(jq -r ".settings.custom_management_groups.$group.display_name" "$JSON_FILE")
   parent_id=$(jq -r ".settings.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
   subscription_ids=$(jq -c ".settings.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+  echo "Adding custom management group to main file."
   if [ -n "$id" ]; then
     custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
     custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
