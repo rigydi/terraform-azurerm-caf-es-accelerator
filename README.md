@@ -28,3 +28,11 @@ The content of this repository enables you to create the required Terraform file
 
 **7) Execute**
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
+
+## Examples
+
+Examples can be found in the [examples](./examples/) folder.
+
+## Documentation
+
+Additional documentation can be found in folder [docs](./docs).
