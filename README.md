@@ -7,7 +7,7 @@ The content of this repository enables you to create the required Terraform file
 **1) Fork**
 - Fork this repo to your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
 
-**2) Execution Host**
+**2) Clone**
 - Clone the forked repository to the machine on which the setup procedure will be executed (e.g. local notebook).
 
 **3) Visual Studio Code**
