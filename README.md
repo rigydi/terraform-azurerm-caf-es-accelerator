@@ -1,6 +1,6 @@
 # Terraform CAF Enterprise Scale Accelerator
 
-The content of this repository helps you to create the required Terraform files for using [terraform-azurerm-caf-enterprise-scale](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale) in a standardized and automated way.
+The content of this repository enables you to create the required Terraform files for using [terraform-azurerm-caf-enterprise-scale](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale) in a standardized and automated way.
 
 # Setup Procedure
 
