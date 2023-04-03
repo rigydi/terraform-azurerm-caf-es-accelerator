@@ -19,7 +19,7 @@ The content of this repository enables you to create the required Terraform file
 - VSC will now open your workspace in a devcontainer. You will have access to the script files and executables.
 
 **5) Settings**
-- Adjust the file settings.yaml according to your needs.
+- Adjust the file **settings.yaml** according to your needs.
 
 **6) Setup Script**
 - Start the setup script by executing
