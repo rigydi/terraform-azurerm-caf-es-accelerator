@@ -12,6 +12,8 @@ FILE_MAIN="main.tf"
 FILE_VARIABLES="variables.tf"
 FILE_TFVARS="terraform.tfvars"
 FILE_SETTINGS="settings.yaml"
+FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
+FILE_LOCALS_MANAGEMENT="settings.management.tf"
 
 BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
 BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
@@ -152,6 +154,7 @@ module "enterprise_scale" {
     azurerm.management = azurerm
   }
 
+  # Core
   root_parent_id = data.azurerm_client_config.core.tenant_id
   root_id = var.root_id
   default_location = var.default_location
@@ -186,6 +189,8 @@ EOF
   mv tmp.txt $FILE_MAIN
     
   echo "Adding subscription_id_connectivity to main file."
+  echo "" >> $FILE_MAIN
+  echo "# Connectivity" >> $FILE_MAIN
   echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FILE_MAIN
 fi
 
@@ -214,13 +219,29 @@ fi
 echo "Adding deploy_connectivity_resources to main file."
 echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FILE_MAIN
 
-if [ -n "$CONNECTIVITY_CUSTOM" ]; then
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > tmp.txt
-  echo "Adding variable 'configure_connectivity_resources' to variables file."
-  echo "" >> $FILE_VARIABLES
-  sed -n '/variable "configure_connectivity_resources" {/,/^}/p' tmp.txt >> $FILE_VARIABLES
-  rm tmp.txt > /dev/null 2>&1
+if [ "$CONNECTIVITY_CUSTOM" == true ]; then
+  # Create FILE_LOCALS_CONNECTIVITY
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  sed -n '/variable "configure_connectivity_resources" {/,/^}/p' 1.txt > 2.txt
+  sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
+  sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt
+  
+  echo "Adding configure_connectivity_resources to locals."
+  cat <<EOF > $FILE_LOCALS_CONNECTIVITY
+locals {
+  configure_connectivity_resources = {
+EOF
+
+  cat 2.txt >> $FILE_LOCALS_CONNECTIVITY
+
+  cat <<EOF >> $FILE_LOCALS_CONNECTIVITY
+  }
+}
+EOF
+  rm 1.txt 2.txt
+  echo "configure_connectivity_resources = local.configure_connectivity_resources" >> $FILE_MAIN
 fi
+
 
 ###########################################
 # MANAGEMENT
@@ -250,6 +271,8 @@ EOF
   cat $FILE_MAIN >> tmp.txt
   mv tmp.txt $FILE_MAIN
 
+  echo "" >> $FILE_MAIN
+  echo "# Management" >> $FILE_MAIN
   echo "Adding subscription_id_management to main file."
   echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FILE_MAIN
 fi
@@ -279,12 +302,27 @@ fi
 echo "Adding deploy_management_resources to main file."
 echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MAIN
 
-if [ -n "$MANAGEMENT_CUSTOM" ]; then
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > tmp.txt
-  echo "Adding variable 'configure_management_resources' to variables file."
-  echo "" >> $FILE_VARIABLES
-  sed -n '/variable "configure_management_resources" {/,/^}/p' tmp.txt >> $FILE_VARIABLES
-  rm tmp.txt > /dev/null 2>&1
+if [ "$MANAGEMENT_CUSTOM" == true ]; then
+  # Create FILE_LOCALS_MANAGEMENT
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  sed -n '/variable "configure_management_resources" {/,/^}/p' 1.txt > 2.txt
+  sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
+  sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt
+
+  echo "Adding configure_management_resources to locals."
+  cat <<EOF > $FILE_LOCALS_MANAGEMENT
+locals {
+  configure_management_resources = {
+EOF
+
+  cat 2.txt >> $FILE_LOCALS_MANAGEMENT
+
+  cat <<EOF >> $FILE_LOCALS_MANAGEMENT
+  }
+}
+EOF
+  rm 1.txt 2.txt
+  echo "configure_management_resources = local.configure_management_resources" >> $FILE_MAIN
 fi
 
 ###########################################
@@ -299,6 +337,7 @@ JSON_FILE="settings.json"
 yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 
 # Loop through the custom management groups and map the values to the fields
+echo "# Custom Management Groups" >> $FILE_MAIN
 custom_landing_zones="custom_landing_zones = {\n"
 for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE"); do
   id=$(jq -r ".settings.custom_management_groups.$group.id" "$JSON_FILE")
@@ -336,6 +375,3 @@ echo "}" >> $FILE_MAIN
 # Format all Terraform files
 echo "Formatting all Terraform files."
 terraform fmt > /dev/null 2>&1
-
-
-# sed -n '/variable "configure_connectivity_resources" {/,/^}/p' terraform.tf > output.txt
