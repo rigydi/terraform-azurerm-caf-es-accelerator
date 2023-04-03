@@ -54,14 +54,14 @@ settings:
 ##################
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_connectivity_resources' variable.
 # subscription_id: (Required) The connectivitiy subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in the variables file.
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in a separate file containing a local variable.
 
 ##################
 # management (Optional)
 ##################
 # deploy: Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
 # subscription_id: The management subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in the variables file.
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable.
 
 ##################
 # custom management groups (Optional)
