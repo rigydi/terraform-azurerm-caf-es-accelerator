@@ -14,10 +14,13 @@ settings:
   connectivity:
     deploy:
     subscription_id:
+    custom:
   management:
     deploy:
     subscription_id:
+    custom:
   custom_management_groups:
+    # Add more groups by repeating the following block. The block name (e.g. group1) is irrelevant. Just make sure the block names are different.
     group1:
       parent_management_group_id:
       id:
@@ -49,14 +52,16 @@ settings:
 ##################
 # connectivity (Optional)
 ##################
-# deploy: (Required) Changes the default value (bool: true/false) of variable deploy_connectivity_resources variable.
+# deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_connectivity_resources' variable.
 # subscription_id: (Required) The connectivitiy subscription ID (string).
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in the variables file.
 
 ##################
 # management (Optional)
 ##################
-# deploy: Changes the default value (bool: true/false) of variable deploy_management_resources variable.
+# deploy: Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
 # subscription_id: The management subscription ID (string).
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in the variables file.
 
 ##################
 # custom management groups (Optional)

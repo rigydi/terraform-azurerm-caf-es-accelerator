@@ -26,9 +26,11 @@ DEFAULT_LOCATION=$(yq '.settings.core.default_location' $FILE_SETTINGS)
 
 CONNECTIVITY_DEPLOY=$(yq '.settings.connectivity.deploy' $FILE_SETTINGS)
 CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.connectivity.subscription_id' $FILE_SETTINGS)
+CONNECTIVITY_CUSTOM=$(yq '.settings.connectivity.custom' $FILE_SETTINGS)
 
 MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
+MANAGEMENT_CUSTOM=$(yq '.settings.management.custom' $FILE_SETTINGS)
 
 BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
 
@@ -103,7 +105,7 @@ fi
 
 
 ###########################################
-# Create FILE_VARIABLES
+# variables for core
 ###########################################
 
 echo "Creating variables file."
@@ -155,9 +157,8 @@ module "enterprise_scale" {
   default_location = var.default_location
 EOF
 
-
 ###########################################
-# <>_SUBSCRIPTION_ID conditions
+# CONNECTIVITY
 ###########################################
 
 if [ -n "$CONNECTIVITY_SUBSCRIPTION_ID" ]; then
@@ -181,44 +182,12 @@ data "azurerm_client_config" "connectivity" {
 
 EOF
 
-cat $FILE_MAIN >> tmp.txt
-mv tmp.txt $FILE_MAIN
-  
-echo "Adding subscription_id_connectivity to main file."
-echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FILE_MAIN
+  cat $FILE_MAIN >> tmp.txt
+  mv tmp.txt $FILE_MAIN
+    
+  echo "Adding subscription_id_connectivity to main file."
+  echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FILE_MAIN
 fi
-
-if [ -n "$MANAGEMENT_SUBSCRIPTION_ID" ]; then
-  echo "Configuring management provider."
-  sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' main.tf
-
-  cat <<EOF >> $FILE_PROVIDERS
-
-provider "azurerm" {
-  alias           = "management"
-  subscription_id = "$MANAGEMENT_SUBSCRIPTION_ID"
-  features {}
-}
-EOF
-
-  echo "Creating management data source."
-  cat <<EOF >> tmp.txt
-data "azurerm_client_config" "management" {
-  provider = azurerm.management
-}
-
-EOF
-
-cat $FILE_MAIN >> tmp.txt
-mv tmp.txt $FILE_MAIN
-
-echo "Adding subscription_id_management to main file."
-echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FILE_MAIN
-fi
-
-###########################################
-# CONNECTIVITY_DEPLOY
-###########################################
 
 if [ "$CONNECTIVITY_DEPLOY" == true ]; then
   echo "Adding deploy_connectivity_resources to variable file."
@@ -245,9 +214,45 @@ fi
 echo "Adding deploy_connectivity_resources to main file."
 echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FILE_MAIN
 
+if [ -n "$CONNECTIVITY_CUSTOM" ]; then
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > tmp.txt
+  echo "Adding variable 'configure_connectivity_resources' to variables file."
+  echo "" >> $FILE_VARIABLES
+  sed -n '/variable "configure_connectivity_resources" {/,/^}/p' tmp.txt >> $FILE_VARIABLES
+  rm tmp.txt > /dev/null 2>&1
+fi
+
 ###########################################
-# MANAGEMENT_DEPLOY
+# MANAGEMENT
 ###########################################
+
+if [ -n "$MANAGEMENT_SUBSCRIPTION_ID" ]; then
+  echo "Configuring management provider."
+  sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' main.tf
+
+  cat <<EOF >> $FILE_PROVIDERS
+
+provider "azurerm" {
+  alias           = "management"
+  subscription_id = "$MANAGEMENT_SUBSCRIPTION_ID"
+  features {}
+}
+EOF
+
+  echo "Creating management data source."
+  cat <<EOF >> tmp.txt
+data "azurerm_client_config" "management" {
+  provider = azurerm.management
+}
+
+EOF
+
+  cat $FILE_MAIN >> tmp.txt
+  mv tmp.txt $FILE_MAIN
+
+  echo "Adding subscription_id_management to main file."
+  echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FILE_MAIN
+fi
 
 if [ "$MANAGEMENT_DEPLOY" == true ]; then
   echo "Adding deploy_management_resources to variable file."
@@ -274,6 +279,13 @@ fi
 echo "Adding deploy_management_resources to main file."
 echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MAIN
 
+if [ -n "$MANAGEMENT_CUSTOM" ]; then
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > tmp.txt
+  echo "Adding variable 'configure_management_resources' to variables file."
+  echo "" >> $FILE_VARIABLES
+  sed -n '/variable "configure_management_resources" {/,/^}/p' tmp.txt >> $FILE_VARIABLES
+  rm tmp.txt > /dev/null 2>&1
+fi
 
 ###########################################
 # Custom Management Groups
@@ -294,7 +306,8 @@ for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE")
   parent_id=$(jq -r ".settings.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
   subscription_ids=$(jq -c ".settings.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
   echo "Adding custom management group to main file."
-  if [ -n "$id" ]; then
+  # Check if id is not null
+  if [[ "$id" != null ]]; then
     custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
     custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
     custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}-$parent_id\"\n"
@@ -323,3 +336,6 @@ echo "}" >> $FILE_MAIN
 # Format all Terraform files
 echo "Formatting all Terraform files."
 terraform fmt > /dev/null 2>&1
+
+
+# sed -n '/variable "configure_connectivity_resources" {/,/^}/p' terraform.tf > output.txt
