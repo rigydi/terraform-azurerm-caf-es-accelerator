@@ -24,7 +24,7 @@ The content of this repository enables you to create the required Terraform file
 **6) Setup Script**
 - Start the setup script by executing
 > ./setup.sh
-- The script will create the corresponding Terraform CAF Enterprise Scale files according to your inputs in settings.yaml.
+- The script will create the corresponding Terraform CAF Enterprise Scale files according to your inputs in **settings.yaml**.
 
 **7) Execute**
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
