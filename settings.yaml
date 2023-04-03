@@ -23,6 +23,11 @@ settings:
       id:
       display_name:
       subscription_ids:
+    # group2:
+    #   parent_management_group_id:
+    #   id:
+    #   display_name:
+    #   subscription_ids:
 
 ########################################################
 # Documentation
