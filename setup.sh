@@ -3,6 +3,7 @@
 # exit on error
 set -e
 
+
 ###########################################
 # Variables
 ###########################################
@@ -15,6 +16,7 @@ FILE_SETTINGS="settings.yaml"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
 
+BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
 BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
 BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
 BACKEND_RESOURCE_GROUP_NAME=$(yq '.settings.backend.resource_group_name' $FILE_SETTINGS)
@@ -34,7 +36,6 @@ MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
 MANAGEMENT_CUSTOM=$(yq '.settings.management.custom' $FILE_SETTINGS)
 
-BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -53,19 +54,19 @@ clean_up () {
   rm -rvf *.tf .terraform* *.tfvars *.tfstate* >/dev/null 2>&1
 }
 
+
 ###########################################
 # Some preparation steps
 ###########################################
 
-# echo -n "Clean up all files? (yes/no): "
-# read CLEAN_UP
+echo -n "Clean up all files? (yes/no): "
+read CLEAN_UP
 
-# if [ "$CLEAN_UP" == "yes" ]; then
-#   clean_up
-# fi
+if [ "$CLEAN_UP" == "yes" ]; then
+  echo "Cleaning up files."
+  clean_up
+fi
 
-echo "Cleaning up files."
-clean_up
 
 ###########################################
 # Create FILE_PROVIDERS
@@ -73,7 +74,7 @@ clean_up
 
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
-echo "Creating provider restrictions."
+echo "Adding provider restrictions."
 cat <<EOF >> $FILE_PROVIDERS
 terraform {
   required_providers {
@@ -110,7 +111,7 @@ fi
 # variables for core
 ###########################################
 
-echo "Creating variables file."
+echo "Adding core variables to variables file."
 
 cat <<EOF > $FILE_VARIABLES
 variable "root_id" {
@@ -134,12 +135,12 @@ EOF
 
 
 ###########################################
-# Create default
+# Create initial FILE_MAIN
 ###########################################
 
 ES_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
-echo "Creating main file."
+echo "Adding module configuration to main file."
 
 cat <<EOF > $FILE_MAIN
 data "azurerm_client_config" "core" {}
@@ -160,12 +161,13 @@ module "enterprise_scale" {
   default_location = var.default_location
 EOF
 
+
 ###########################################
 # CONNECTIVITY
 ###########################################
 
 if [ -n "$CONNECTIVITY_SUBSCRIPTION_ID" ]; then
-  echo "Configuring connectivity provider."
+  echo "Adding connectivity provider."
   sed -i 's/azurerm.connectivity = azurerm/azurerm.connectivity = azurerm.connectivity/' main.tf
 
   cat <<EOF >> $FILE_PROVIDERS
@@ -177,7 +179,7 @@ provider "azurerm" {
 }
 EOF
 
-  echo "Creating connectivity data source."
+  echo "Adding connectivity data source."
   cat <<EOF >> tmp.txt
 data "azurerm_client_config" "connectivity" {
   provider = azurerm.connectivity
@@ -248,7 +250,7 @@ fi
 ###########################################
 
 if [ -n "$MANAGEMENT_SUBSCRIPTION_ID" ]; then
-  echo "Configuring management provider."
+  echo "Adding management provider."
   sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' main.tf
 
   cat <<EOF >> $FILE_PROVIDERS
@@ -260,7 +262,7 @@ provider "azurerm" {
 }
 EOF
 
-  echo "Creating management data source."
+  echo "Adding management data source."
   cat <<EOF >> tmp.txt
 data "azurerm_client_config" "management" {
   provider = azurerm.management
@@ -324,6 +326,7 @@ EOF
   rm 1.txt 2.txt
   echo "configure_management_resources = local.configure_management_resources" >> $FILE_MAIN
 fi
+
 
 ###########################################
 # Custom Management Groups
