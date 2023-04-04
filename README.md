@@ -4,7 +4,7 @@ The content of this repository enables you to create the initial Terraform files
 
 # Setup Procedure
 
-![Diagram](./docs/setup-procedure.drawio.png "Setup Procedure")
+![Diagram](./docs/diagram.drawio.png "Diagram")
 
 **1) Fork**
 - Fork this repo to your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
