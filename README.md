@@ -1,6 +1,10 @@
 # Terraform CAF Enterprise Scale Accelerator
 
-The content of this repository enables you to create the initial Terraform files for [terraform-azurerm-caf-enterprise-scale](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale) in a standardized and automated way.
+This repository standardizes and automates:
+1) the deployment of an Azure backend storage for Terraform state file management (Launchpad)
+2) a bootstrapping procedure for creating Terraform configuration files required by [terraform-azurerm-caf-enterprise-scale](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale)
+
+</br>
 
 # Setup Procedure
 
