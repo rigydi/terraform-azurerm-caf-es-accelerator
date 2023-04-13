@@ -28,16 +28,28 @@ function print_empty_lines() {
   done
 }
 
-exit_function () {
-    trap SIGINT
+function cleanup() {
+  rm -rvf .terraform* backend.tf terraform.tfstate* terraform.tfvars *.tfplan >/dev/null 2>&1
+} 
+
+function handle_interrupt () {
     print_empty_lines 2
-    echo -n "Cleaning up files."
-    rm -rvf .terraform* backend.tf terraform.tfstate* terraform.tfvars *.tfplan >/dev/null 2>&1
-    echo -n "Finished. Exiting ..."    
-    return 1
+    echo "Cleaning up files."
+    cleanup
+    echo "Finished. Exiting ..."    
+    exit 1
 }
 
-trap "exit_function" INT
+function handle_error () {
+    print_empty_lines 2
+    echo "An error occurred."
+    cleanup
+    echo "Exiting ..."    
+    exit 1
+}
+
+trap 'handle_interrupt' INT
+trap 'handle_error' ERR
 
 ####################################
 # Introduction
@@ -55,7 +67,6 @@ if [ "$answer" == "yes" ]; then
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi
 
 ####################################
@@ -83,11 +94,10 @@ read answer
 
 if [ "$answer" == "yes" ]; then
   print_empty_lines 1
-  echo -n "Alright, let us continue."
+  echo -n "Let us continue."
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi
 
 # Loop through each variable in var_names array
@@ -136,12 +146,10 @@ if [ "$answer" == "yes" ]; then
   else
     print_empty_lines 1
     echo -e "\e[1;31m"Terraform init failed."\e[0m"
-    return 1
   fi
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi 
 
 
@@ -167,12 +175,10 @@ if [ "$answer" == "yes" ]; then
   else
     print_empty_lines 1
     echo -e "\e[1;31m"Terraform plan failed. Fix the error and re-run the script."\e[0m"
-    return 1
   fi
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi 
 
 
@@ -195,17 +201,14 @@ if [ "$answer" == "yes" ]; then
     else
       print_empty_lines 1
       echo -e "\e[1;31m"Terraform apply failed."\e[0m"
-      return 1
     fi
   else
     print_empty_lines 1
     echo -e "\e[1;31m"Terraform plan file does not exist. Re-run the script and make sure you successfully complete the 'terraform plan' step."\e[0m"
-    return 1
   fi
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi
 
 
@@ -260,16 +263,13 @@ EOF
       rm ./*.tfstate* >/dev/null 2>&1
     else
       echo -e "\e[1;32m"Setting up Azure backend failed."\e[0m"
-      return 1
     fi
   else
     echo "\e[1;31m"This step was not executed. It seems that 'terraform plan' was not executed beforehand. The terraform plan file is missing in the local file system. Please re-run the the script."\e[0m"
-    return 1
   fi
 else
   print_empty_lines 1
   echo -n "Good bye."
-  return 1
 fi
 
 ####################################

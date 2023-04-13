@@ -18,23 +18,6 @@ locals {
 }
 
 ##################################
-# Management Group for Launchpad
-##################################
-
-data "azurerm_management_group" "root" {
-  display_name = "Tenant Root Group"
-}
-
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_group
-resource "azurerm_management_group" "launchpad" {
-  display_name               = var.management_group_display_name
-  parent_management_group_id = data.azurerm_management_group.root.id
-
-  subscription_ids = ["${var.subscription_id}"]
-}
-
-
-##################################
 # Resource Group for Launchpad
 ##################################
 
@@ -50,7 +33,6 @@ resource "azurerm_resource_group" "launchpad" {
   name       = azurecaf_name.rg.result
   location   = var.location
   tags       = local.tags
-  depends_on = [azurerm_management_group.launchpad]
 }
 
 

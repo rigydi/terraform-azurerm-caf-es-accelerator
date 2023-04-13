@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# exit on error
-set -e
-
-
 ###########################################
 # Variables
 ###########################################
@@ -15,6 +11,9 @@ FILE_TFVARS="terraform.tfvars"
 FILE_SETTINGS="settings.yaml"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
+
+array_terraform_files=($FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $FILE_SETTINGS $FILE_LOCALS_CONNECTIVITY $FILE_LOCALS_MANAGEMENT)
+FOLDER_BACKUP = "backup"
 
 BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
 BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
@@ -36,7 +35,6 @@ MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
 MANAGEMENT_CUSTOM=$(yq '.settings.management.custom' $FILE_SETTINGS)
 
-
 ###########################################
 # Functions
 ###########################################
@@ -50,9 +48,46 @@ function print_empty_lines() {
 }
 
 # clean up files
-clean_up () {
+cleanup () {
   rm -rvf *.tf .terraform* *.tfvars *.tfstate* >/dev/null 2>&1
 }
+
+function backup () {
+
+  if [ ! -d "./$FOLDER_BACKUP" ]
+  then
+      mkdir ./$FOLDER_BACKUP
+  fi
+
+  for file in "${array_terraform_files[@]}"
+  do
+    cp "$file" ./$FOLDER_BACKUP
+  done
+}
+
+function handle_interrupt () {
+  print_empty_lines 2
+  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  backup
+  echo "Cleaning up files."
+  cleanup
+  echo "Finished. Exiting ..."    
+  exit 1
+}
+
+function handle_error () {
+  print_empty_lines 2
+  echo "An error occurred."
+  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  backup
+  echo "Cleaning up files."
+  cleanup
+  echo "Exiting ..."    
+  exit 1
+}
+
+trap 'handle_interrupt' INT
+trap 'handle_error' ERR
 
 
 ###########################################
@@ -60,11 +95,11 @@ clean_up () {
 ###########################################
 
 echo -n "Clean up all files? (yes/no): "
-read CLEAN_UP
+read CLEANUP
 
-if [ "$CLEAN_UP" == "yes" ]; then
+if [ "$CLEANUP" == "yes" ]; then
   echo "Cleaning up files."
-  clean_up
+  cleanup
 fi
 
 

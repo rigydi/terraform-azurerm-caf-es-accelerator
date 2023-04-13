@@ -42,7 +42,7 @@ The content of this repository enables you to create the initial Terraform files
 
 **7) Installation Script**
 - Start the installation script by executing
-> cd ./launchpad; source ./launchpad.sh
+> cd ./launchpad; ./launchpad.sh
 
 Follow the instructions.
 

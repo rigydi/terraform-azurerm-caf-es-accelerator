@@ -55,9 +55,6 @@ rectangle "Launchpad (LP) - Setup Procedure" as launchpad {
   rectangle "<color:purple><$terraform></color> terraform.exe" as terraform
 
   rectangle "Launchpad Azure Resources" as azresources {
-    ' Azure Management Group
-    !includeurl AzurePuml/Management/AzureManagementGroups.puml
-    rectangle "<color:AZURE_SYMBOL_COLOR><$AzureManagementGroups></color> LP Mgmt Group" as mgmtgroup
 
     ' Resource Group
     !includeurl AzurePuml/Management/AzureResourceGroups.puml

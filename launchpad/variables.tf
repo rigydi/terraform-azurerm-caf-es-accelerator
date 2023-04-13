@@ -1,7 +1,3 @@
-###############################################################
-# Terraform variables
-###############################################################
-
 variable "subscription_id" {
   description = "The ID of the Azure subscription in which the launchpad resources will be deployed."
   type        = string
@@ -10,12 +6,6 @@ variable "subscription_id" {
 variable "tenant_id" {
   description = "The Azure Active Directory Tenant ID."
   type        = string
-}
-
-variable "management_group_display_name" {
-  description = "The display name of the Terraform launchpad management group."
-  type        = string
-  default     = "Terraform"
 }
 
 variable "basename" {
