@@ -1,0 +1,38 @@
+name: testing-launchpad
+
+on:
+  workflow_dispatch:
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}  
+  
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+    steps:
+
+      ##########################
+      # Preparing
+      ##########################
+
+      # https://github.tools.sap/ghcom-actions/actions-checkout
+      - name: Preparing - Github - checkout respository     
+        uses: actions/checkout@v3
+
+      # https://github.com/hashicorp/setup-terraform
+      - name: Preparing - Terraform - install CLI
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      ##########################
+      # Testing
+      ##########################
+
+      - name: "Testing"
+        working-directory: test
+        run: ./test.sh ${{ secrets.ARM_CLIENT_ID }} ${{ secrets.ARM_CLIENT_SECRET }} ${{ secrets.ARM_SUBSCRIPTION_ID_LAUNCHPAD }} ${{ secrets.ARM_TENANT_ID }}
+        shell: bash
