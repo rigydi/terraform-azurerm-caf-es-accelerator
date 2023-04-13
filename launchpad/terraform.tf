@@ -1,6 +1,4 @@
-###############################################################
-# Provider and Version Restrictions
-###############################################################
+# Provider Versions and Restrictions
 
 terraform {
   required_version = "~> 1.3"
@@ -12,6 +10,8 @@ terraform {
     }
   }
 }
+
+# Azure Provider - Default
 
 provider "azurerm" {
   subscription_id = var.subscription_id

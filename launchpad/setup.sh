@@ -63,7 +63,7 @@ read answer
 
 if [ "$answer" == "yes" ]; then
   print_empty_lines 1
-  echo -n "Alright, let us continue."
+  echo -n "Alright, let us begin."
 else
   print_empty_lines 1
   echo -n "Good bye."

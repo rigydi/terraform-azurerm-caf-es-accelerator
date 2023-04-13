@@ -30,9 +30,9 @@ resource "azurecaf_name" "rg" {
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group
 resource "azurerm_resource_group" "launchpad" {
-  name       = azurecaf_name.rg.result
-  location   = var.location
-  tags       = local.tags
+  name     = azurecaf_name.rg.result
+  location = var.location
+  tags     = local.tags
 }
 
 
@@ -59,28 +59,7 @@ resource "azurerm_storage_account" "launchpad" {
 
 
 ##################################
-# Blob Container for Launchpad Terraform state file
-##################################
-
-# https://registry.terraform.io/providers/aztfmod/azurecaf/latest
-resource "azurecaf_name" "bloblaunchpad" {
-  name          = var.basename
-  resource_type = "azurerm_storage_blob"
-  random_length = var.random_length
-}
-
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_container
-resource "azurerm_storage_container" "launchpad" {
-  name                  = azurecaf_name.bloblaunchpad.result
-  storage_account_name  = azurerm_storage_account.launchpad.name
-  container_access_type = "private"
-
-  lifecycle { prevent_destroy = true }
-}
-
-
-##################################
-# Blob Container for Terraform CAF Enterprise Scale (tfcafes) state file
+# Blob Container for Launchpad and Terraform CAF Enterprise Scale (tfcafes) state file
 ##################################
 
 # https://registry.terraform.io/providers/aztfmod/azurecaf/latest
@@ -95,6 +74,6 @@ resource "azurerm_storage_container" "tfcafes" {
   name                  = azurecaf_name.tfcafes.result
   storage_account_name  = azurerm_storage_account.launchpad.name
   container_access_type = "private"
-
+  
   lifecycle { prevent_destroy = true }
 }

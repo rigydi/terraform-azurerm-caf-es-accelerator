@@ -42,7 +42,7 @@ The content of this repository enables you to create the initial Terraform files
 
 **7) Installation Script**
 - Start the installation script by executing
-> cd ./launchpad; ./launchpad.sh
+> cd ./launchpad; ./setup.sh
 
 Follow the instructions.
 
@@ -58,14 +58,14 @@ Follow the instructions.
 <br/>
 
 **10) Settings**
-- Adjust the file **settings.yaml** according to your needs.
+- Adjust the file **bootstrap.yaml** according to your needs.
 
 **11) Bootstrap Terraform CAF ES**
 - Start the script by executing
 > ./bootstrap.sh
 
 **12) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **settings.yaml**.
+- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
 
 </br>

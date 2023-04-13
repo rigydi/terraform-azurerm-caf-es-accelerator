@@ -67,10 +67,6 @@ rectangle "Launchpad (LP) - Setup Procedure" as launchpad {
     ' TF-CAF-ES Blob Container
     !includeurl AzurePuml/Storage/AzureBlobStorage.puml
     rectangle "<color:orange><$AzureBlobStorage></color> TF-CAF-ES Blob Container (Terraform state)" as blobtfcafes
-
-    ' LP Blob Container
-    !includeurl AzurePuml/Storage/AzureBlobStorage.puml
-    rectangle "<color:red><$AzureBlobStorage></color> LP Blob Container (Terraform state)" as bloblaunchpad
   }
 }
 
@@ -89,12 +85,11 @@ user --> spn: 6) creates and assigns role
 user ---> setuplp: 7) executes
 
 setuplp --> azresources: 8) creates
-setuplp --> bloblaunchpad: 9) copies TF state file to
+setuplp --> blobtfcafes: 9) copies TF state file to
 setuplp .> terraform: uses
 
 resgroup .> straccount: contains
 straccount ..> blobtfcafes: contains
-straccount ..> bloblaunchpad: contains
 
 
 

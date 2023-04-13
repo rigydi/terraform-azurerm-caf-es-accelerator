@@ -1,36 +1,26 @@
 settings:
   backend:
     configure: true
-    tenant_id: "111111111-111111111-111111111-111111111"
-    subscription_id: "222222222-222222222-222222222-222222222"
-    resource_group_name: "rg-my-backend"
-    storage_account_name: "strmybackend"
-    container_name: "blob-my-backend"
-    key: "terraform-caf-es.tfstate"
   core:
     root_id: "myorg"
     root_name: "My Org Ltd."
     default_location: "westeurope"
   connectivity:
-    deploy: true
-    subscription_id: "333333333-333333333-333333333-333333333"
-    custom: true
+    deploy: false
+    subscription_id: "bf59a090-7dd1-4b1c-ab12-853f53d793e1"
+    customize: true
   management:
-    deploy: true
-    subscription_id: "444444444-444444444-444444444-444444444"
-    custom: true
+    deploy: false
+    subscription_id: "d23d0608-39bb-4774-b1f7-9b1bf4956b10"
+    customize: true
   custom_management_groups:
-    # Add more groups by repeating the following block. The block name (e.g. group1) is irrelevant. Just make sure the block names are different.
-    group1:
-      parent_management_group_id: "landing_zones"
-      id: "newgroup1"
-      display_name: "My new Mgmt. Group 1"
-      subscription_ids: ["5555555555-5555555555-5555555555-5555555555", "666666666-666666666-666666666-666666666"]
-    group2:
-      parent_management_group_id: "landing_zones"
-      id: "newgroup2"
-      display_name: "My new Mgmt. Group 2"
-      subscription_ids: ["777777777-777777777-777777777-777777777"]
+    # The following group is used for the Launchpad.
+    # Add more groups if required. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. launchpad, mygroup1, mygroup2 etc.).
+    launchpad:
+      parent_management_group_id: "root"
+      id: "launchpad"
+      display_name: "Launchpad"
+      subscription_ids: ["4cf21e62-eb45-47bc-ba0b-6bc5f54d08a8"]
 
 ########################################################
 # Documentation
@@ -39,12 +29,7 @@ settings:
 ##################
 # backend (Optional)
 ##################
-# configure: (Optional) Decision (bool: true/false) to add backend configuration.
-# tenant_id: (Required) The AAD tenant ID (string) to which the subscription is connected containing the backend storage account.
-# subscription_id: (Required) The subscription ID (string) in which the backend storage account is deployed.
-# resource_group_name: (Required) The resource group (string) in which the backend storage account is located.
-# storage_account_name: (Required) The storage account name (string) in which the blob container is located for storing the Terraform state file.
-# container_name: (Required) The blob container name in which the Terraform state file will be stored.
+# configure: (Optional) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process.
 # key: (Required) The name (string) of the Terraform state file.
 
 ##################
@@ -59,14 +44,14 @@ settings:
 ##################
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_connectivity_resources' variable.
 # subscription_id: (Required) The connectivitiy subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in the variables file.
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in a separate file containing a local variable.
 
 ##################
 # management (Optional)
 ##################
 # deploy: Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
 # subscription_id: The management subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in the variables file.
+# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable.
 
 ##################
 # custom management groups (Optional)

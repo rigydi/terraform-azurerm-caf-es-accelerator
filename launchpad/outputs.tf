@@ -7,5 +7,5 @@ output "storage_account_name" {
 }
 
 output "container_name" {
-  value = azurerm_storage_container.launchpad.name
+  value = azurerm_storage_container.tfcafes.name
 }
