@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# exit on error
-set -e
-
-
 ###########################################
 # Variables
 ###########################################
@@ -12,17 +8,23 @@ FILE_PROVIDERS="terraform.tf"
 FILE_MAIN="main.tf"
 FILE_VARIABLES="variables.tf"
 FILE_TFVARS="terraform.tfvars"
-FILE_SETTINGS="settings.yaml"
+FILE_SETTINGS="bootstrap.yaml"
+FILE_BACKEND_LAUNCHPAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
 
+array_terraform_files=($FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $FILE_SETTINGS $FILE_LOCALS_CONNECTIVITY $FILE_LOCALS_MANAGEMENT)
+FOLDER_BACKUP="backup"
+FOLDER_LAUNCHPAD="launchpad"
+
 BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
-BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
-BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
-BACKEND_RESOURCE_GROUP_NAME=$(yq '.settings.backend.resource_group_name' $FILE_SETTINGS)
-BACKEND_STORAGE_ACCOUNT_NAME=$(yq '.settings.backend.storage_account_name' $FILE_SETTINGS)
-BACKEND_CONTAINER_NAME=$(yq '.settings.backend.container_name' $FILE_SETTINGS)
-BACKEND_STATE_FILENAME=$(yq '.settings.backend.key' $FILE_SETTINGS)
+# BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
+# BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
+# BACKEND_RESOURCE_GROUP_NAME=$(yq '.settings.backend.resource_group_name' $FILE_SETTINGS)
+# BACKEND_STORAGE_ACCOUNT_NAME=$(yq '.settings.backend.storage_account_name' $FILE_SETTINGS)
+# BACKEND_CONTAINER_NAME=$(yq '.settings.backend.container_name' $FILE_SETTINGS)
+# BACKEND_STATE_FILENAME=$(yq '.settings.backend.key' $FILE_SETTINGS)
+BACKEND_STATE_FILENAME="terraform-caf-es.tfstate"
 
 ROOT_ID=$(yq '.settings.core.root_id' $FILE_SETTINGS)
 ROOT_NAME=$(yq '.settings.core.root_name' $FILE_SETTINGS)
@@ -30,12 +32,11 @@ DEFAULT_LOCATION=$(yq '.settings.core.default_location' $FILE_SETTINGS)
 
 CONNECTIVITY_DEPLOY=$(yq '.settings.connectivity.deploy' $FILE_SETTINGS)
 CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.connectivity.subscription_id' $FILE_SETTINGS)
-CONNECTIVITY_CUSTOM=$(yq '.settings.connectivity.custom' $FILE_SETTINGS)
+CONNECTIVITY_CUSTOM=$(yq '.settings.connectivity.customize' $FILE_SETTINGS)
 
 MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
-MANAGEMENT_CUSTOM=$(yq '.settings.management.custom' $FILE_SETTINGS)
-
+MANAGEMENT_CUSTOM=$(yq '.settings.management.customize' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -50,32 +51,112 @@ function print_empty_lines() {
 }
 
 # clean up files
-clean_up () {
+cleanup () {
   rm -rvf *.tf .terraform* *.tfvars *.tfstate* >/dev/null 2>&1
 }
+
+function backup () {
+
+  if [ ! -d "./$FOLDER_BACKUP" ]
+  then
+      mkdir -p ./$FOLDER_BACKUP > /dev/null 2>&1
+  fi
+
+  for file in "${array_terraform_files[@]}"
+  do
+    if [[ -z $file ]]
+    then
+      echo "File $file is not existing. No backup necessary."
+    else
+      echo "Backing up: $file"
+      cp "$file" ./$FOLDER_BACKUP > /dev/null 2>&1
+    fi
+  done
+}
+
+function handle_interrupt () {
+  print_empty_lines 2
+  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  backup
+  echo "Cleaning up files."
+  cleanup
+  echo "Finished. Exiting ..."    
+  exit 1
+}
+
+function handle_error () {
+  print_empty_lines 2
+  echo "An error occurred."
+  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  backup
+  echo "Cleaning up files."
+  cleanup
+  echo "Exiting ..."    
+  exit 1
+}
+
+trap 'handle_interrupt' INT
+trap 'handle_error' ERR
 
 
 ###########################################
 # Some preparation steps
 ###########################################
 
-echo -n "Clean up all files? (yes/no): "
-read CLEAN_UP
-
-if [ "$CLEAN_UP" == "yes" ]; then
-  echo "Cleaning up files."
-  clean_up
+# Backing up current Terraform configuration files.
+if ! backup > /dev/null 2>&1; then
+  echo "An error occurred while backing up current configuration files."
+else
+  echo "Backing up current configuration files."
 fi
 
+if ! cleanup > /dev/null 2>&1; then
+  echo "An error occurred while cleaning up current configuration files."
+else
+  echo "Cleaning up current configuration files."
+fi
 
 ###########################################
 # Create FILE_PROVIDERS
 ###########################################
 
+if [ "$BACKEND_CONFIGURE" == true ]; then
+  if [ -f "./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD" ]
+  then
+    echo "Adding backend definition."
+    echo "# Azure Backend Configuration for Terraform State File Management" >> $FILE_PROVIDERS
+    echo "" >> $FILE_PROVIDERS
+    cat ./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD >> ./$FILE_PROVIDERS
+    sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" ./$FILE_PROVIDERS
+  else
+    echo "No backend definition found in $FOLDER_LAUNCHPAD."
+    echo "Attention! Creating empty backend definition in $FILE_PROVIDERS. Make sure to declare the backend in file $FILE_PROVIDERS."
+
+cat <<EOF >> $FILE_PROVIDERS
+# Terraform State File Backend Configuration"
+
+terraform {
+  backend "azurerm" {
+    tenant_id = ""
+    subscription_id = ""
+    resource_group_name = ""
+    storage_account_name = ""
+    container_name = ""
+    key = ""
+  }
+}
+EOF
+
+  fi
+fi
+
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
 echo "Adding provider restrictions."
+echo "" >> $FILE_PROVIDERS
+echo "# Provider Versions and Restrictions" >> $FILE_PROVIDERS
 cat <<EOF >> $FILE_PROVIDERS
+
 terraform {
   required_providers {
     azurerm = {
@@ -85,26 +166,12 @@ terraform {
   }
 }
 
+# Azure Provider - Default
+
 provider "azurerm" {
   features {}
 }
 EOF
-
-if [ "$BACKEND_CONFIGURE" == true ]; then
-cat <<EOF >> $FILE_PROVIDERS
-
-terraform {
-  backend "azurerm" {
-    tenant_id = "$BACKEND_TENANT_ID"
-    subscription_id = "$BACKEND_SUBSCRIPTION_ID"
-    resource_group_name = "$BACKEND_RESOURCE_GROUP_NAME"
-    storage_account_name = "$BACKEND_STORAGE_ACCOUNT_NAME"
-    container_name = "$BACKEND_CONTAINER_NAME"
-    key = "$BACKEND_STATE_FILENAME"
-  }
-}
-EOF
-fi
 
 
 ###########################################
@@ -171,6 +238,8 @@ if [ -n "$CONNECTIVITY_SUBSCRIPTION_ID" ]; then
   sed -i 's/azurerm.connectivity = azurerm/azurerm.connectivity = azurerm.connectivity/' main.tf
 
   cat <<EOF >> $FILE_PROVIDERS
+
+# Azure Provider - Connectivity
 
 provider "azurerm" {
   alias           = "connectivity"
@@ -254,6 +323,8 @@ if [ -n "$MANAGEMENT_SUBSCRIPTION_ID" ]; then
   sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' main.tf
 
   cat <<EOF >> $FILE_PROVIDERS
+
+# Azure Provider - Management
 
 provider "azurerm" {
   alias           = "management"
@@ -348,18 +419,32 @@ for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE")
   parent_id=$(jq -r ".settings.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
   subscription_ids=$(jq -c ".settings.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
   echo "Adding custom management group to main file."
+
   # Check if id is not null
   if [[ "$id" != null ]]; then
-    custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
-    custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
-    custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}-$parent_id\"\n"
-    custom_landing_zones+="    subscription_ids = $subscription_ids\n"
-    custom_landing_zones+="    archetype_config = {\n"
-    custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
-    custom_landing_zones+="      parameters     = {}\n"
-    custom_landing_zones+="      access_control = {}\n"
-    custom_landing_zones+="    }\n"
-    custom_landing_zones+="  }\n"
+    if [[ "$id" == *"launchpad"* ]]; then
+      custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
+      custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
+      custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}\"\n"
+      custom_landing_zones+="    subscription_ids = $subscription_ids\n"
+      custom_landing_zones+="    archetype_config = {\n"
+      custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
+      custom_landing_zones+="      parameters     = {}\n"
+      custom_landing_zones+="      access_control = {}\n"
+      custom_landing_zones+="    }\n"
+      custom_landing_zones+="  }\n"
+    else
+      custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
+      custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
+      custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}-$parent_id\"\n"
+      custom_landing_zones+="    subscription_ids = $subscription_ids\n"
+      custom_landing_zones+="    archetype_config = {\n"
+      custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
+      custom_landing_zones+="      parameters     = {}\n"
+      custom_landing_zones+="      access_control = {}\n"
+      custom_landing_zones+="    }\n"
+      custom_landing_zones+="  }\n"
+    fi
   fi
 done
 custom_landing_zones+="}"
@@ -376,5 +461,8 @@ echo "Adding closing bracket to main file."
 echo "}" >> $FILE_MAIN
 
 # Format all Terraform files
-echo "Formatting all Terraform files."
-terraform fmt > /dev/null 2>&1
+if ! terraform fmt > /dev/null 2>&1; then
+  echo "An error occurred while formatting Terraform files. Please check all files for syntax errors."
+else
+  echo "Formatting Terraform files."
+fi

@@ -1,31 +1,26 @@
 settings:
   backend:
-    configure:
-    tenant_id:
-    subscription_id:
-    resource_group_name:
-    storage_account_name:
-    container_name:
-    key: "terraform-caf-es.tfstate"
+    configure: true/false
   core:
-    root_id:
-    root_name:
-    default_location:
+    root_id: "myorg"
+    root_name: "My Org Ltd."
+    default_location: "westeurope"
   connectivity:
-    deploy:
-    subscription_id:
-    custom:
+    deploy: true/false
+    subscription_id: ""
+    customize: true/false
   management:
-    deploy:
-    subscription_id:
-    custom:
+    deploy: true/false
+    subscription_id: ""
+    customize: true/false
   custom_management_groups:
-    # Add more groups by repeating the following block. The block name (e.g. group1) is irrelevant. Just make sure the block names are different.
-    group1:
-      parent_management_group_id:
-      id:
-      display_name:
-      subscription_ids:
+    # The following group is used for the Launchpad.
+    # Add more groups if required. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. launchpad, mygroup1, mygroup2 etc.).
+    launchpad:
+      parent_management_group_id: "root"
+      id: "launchpad"
+      display_name: "Launchpad"
+      subscription_ids: [""]
 
 ########################################################
 # Documentation
@@ -34,12 +29,7 @@ settings:
 ##################
 # backend (Optional)
 ##################
-# configure: (Optional) Decision (bool: true/false) to add backend configuration.
-# tenant_id: (Required) The AAD tenant ID (string) to which the subscription is connected containing the backend storage account.
-# subscription_id: (Required) The subscription ID (string) in which the backend storage account is deployed.
-# resource_group_name: (Required) The resource group (string) in which the backend storage account is located.
-# storage_account_name: (Required) The storage account name (string) in which the blob container is located for storing the Terraform state file.
-# container_name: (Required) The blob container name in which the Terraform state file will be stored.
+# configure: (Optional) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process.
 # key: (Required) The name (string) of the Terraform state file.
 
 ##################

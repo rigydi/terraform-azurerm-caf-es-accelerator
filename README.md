@@ -4,7 +4,13 @@ The content of this repository enables you to create the initial Terraform files
 
 # Setup Procedure
 
-![Diagram](./docs/diagram.drawio.png "Diagram")
+![Diagram](./docs/Diagram.svg "Diagram")
+
+<br/>
+
+## Preparation
+
+</br>
 
 **1) Fork**
 - Fork this repo to your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
@@ -20,20 +26,55 @@ The content of this repository enables you to create the initial Terraform files
 - Open VSC and click on the [Explorer](https://code.visualstudio.com/docs/getstarted/userinterface#_explorer) to open your repository. Choose [Reopen in Container](https://code.visualstudio.com/docs/devcontainers/create-dev-container#_add-configuration-files-to-a-repository) when prompted.
 - VSC opens your workspace in a devcontainer with access to the script files and executables.
 
-**5) Settings**
-- Adjust the file **settings.yaml** according to your needs.
+</br>
 
-**6) Setup Script**
-- Start the setup script by executing
-> ./setup.sh
+## Launchpad
 
-**7) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **settings.yaml**.
+</br>
+
+**5) Launchpad Azure Subscription**
+- Create an Azure [subscription](https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/create-subscription) on which the Launchpad resources will be deployed.
+
+**6) Azure Automation User**
+- Create an [Azure Service Principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal) which will be used as an automation user to authenticate to Azure.
+- Assign the [Owner](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles) built-in role to the Service Principal with scope on the [Tenant Root Group](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview).
+- Create a Service Principal [secret](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#service-principal-authentication).
+
+**7) Installation Script**
+- Start the installation script by executing
+> cd ./launchpad; ./setup.sh
+
+Follow the instructions.
+
+**8) Azure Resources**
+- The installation procedure will utilize the Terraform executable and configuration files to authenticate to Azure via the previously created Service Principal to deploy the Launchpad resources. Inspect the [main.tf](https://github.com/rigydi/terraform-azurerm-launchpad/blob/main/main.tf) file to see which resources will be deployed.
+
+**9) Terraform State File**
+- In the last step of the installation procedure, the installation script will configure the [Azure Backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm) to host the [Terraform state file](https://developer.hashicorp.com/terraform/language/state).
+
+<br/>
+
+## Terraform CAF Enterprise Scale Accelerator
+<br/>
+
+**10) Settings**
+- Adjust the file **bootstrap.yaml** according to your needs.
+
+**11) Bootstrap Terraform CAF ES**
+- Start the script by executing
+> ./bootstrap.sh
+
+**12) Execute**
+- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
+
+</br>
 
 ## Examples
 
 Examples can be found in the [examples](./examples/) folder.
+
+</br>
 
 ## Documentation
 
