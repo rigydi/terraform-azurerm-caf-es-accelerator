@@ -4,5 +4,5 @@
 	"features": {
 		"ghcr.io/devcontainers/features/terraform:1":{}
 	},
-	"postCreateCommand": "sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq"
+	"postCreateCommand": "sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq; sudo chown -R vscode:vscode /workspaces; sudo apt-get update; sudo apt-get install dos2unix; find /workspaces -type f -exec dos2unix {} \\;"
 }

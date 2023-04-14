@@ -67,6 +67,7 @@ if [ "$answer" == "yes" ]; then
 else
   print_empty_lines 1
   echo -n "Good bye."
+  exit 1
 fi
 
 ####################################
@@ -121,7 +122,6 @@ do
   fi
 done
 
-
 ####################################
 # Terraform init
 ####################################
@@ -150,8 +150,8 @@ if [ "$answer" == "yes" ]; then
 else
   print_empty_lines 1
   echo -n "Good bye."
+  exit 1
 fi 
-
 
 ####################################
 # Terraform plan
@@ -179,8 +179,8 @@ if [ "$answer" == "yes" ]; then
 else
   print_empty_lines 1
   echo -n "Good bye."
+  exit 1
 fi 
-
 
 ####################################
 # Terraform apply
@@ -209,8 +209,8 @@ if [ "$answer" == "yes" ]; then
 else
   print_empty_lines 1
   echo -n "Good bye."
+  exit 1
 fi
-
 
 ####################################
 # Configure Azure backend
@@ -270,6 +270,7 @@ EOF
 else
   print_empty_lines 1
   echo -n "Good bye."
+  exit 1
 fi
 
 ####################################
@@ -277,4 +278,4 @@ fi
 ####################################
 
 terraform fmt >/dev/null 2>&1
-rm -rvf *.tfplan >/dev/null 2>&1
+rm *.tfplan >/dev/null 2>&1

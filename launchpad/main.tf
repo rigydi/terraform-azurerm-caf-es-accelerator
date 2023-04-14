@@ -35,7 +35,6 @@ resource "azurerm_resource_group" "launchpad" {
   tags     = local.tags
 }
 
-
 ##################################
 # Storage Account for Terraform State files
 ##################################
@@ -56,7 +55,6 @@ resource "azurerm_storage_account" "launchpad" {
   account_replication_type = var.account_replication_type
   tags                     = local.tags
 }
-
 
 ##################################
 # Blob Container for Launchpad and Terraform CAF Enterprise Scale (tfcafes) state file
