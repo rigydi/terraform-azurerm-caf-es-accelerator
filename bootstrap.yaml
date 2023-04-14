@@ -29,8 +29,8 @@ settings:
 ##################
 # backend (Optional)
 ##################
-# configure: (Optional) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process.
-# key: (Required) The name (string) of the Terraform state file.
+# configure: (Required) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process.
+# key: (Optional if 'configure: false') The name (string) of the Terraform state file.
 
 ##################
 # core (Required)
@@ -43,15 +43,15 @@ settings:
 # connectivity (Optional)
 ##################
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_connectivity_resources' variable.
-# subscription_id: (Required) The connectivitiy subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in a separate file containing a local variable.
+# subscription_id: (Optional) The connectivitiy subscription ID (string).
+# customize: (Required) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in a separate file containing a local variable.
 
 ##################
 # management (Optional)
 ##################
-# deploy: Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
-# subscription_id: The management subscription ID (string).
-# custom: (Optional) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable.
+# deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
+# subscription_id: (Optional) The management subscription ID (string).
+# customize: (Required) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable.
 
 ##################
 # custom management groups (Optional)
