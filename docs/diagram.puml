@@ -108,7 +108,7 @@ rectangle "TF-CAF-ES-Accelerator - Setup Procedure" as accelerator {
   rectangle "<color:purple><$terraform></color> tf-caf-es config files" as terraformaccelerator
 }
 
-rectangle "<img:alz-tf-module-overview.png{scale=0.5}>" as cafes
+rectangle "<img:alz-tf-module-overview.png{scale=0.2}>" as cafes
 
 user --> settingsaccelerator: 10) edits
 devcontainer ..> settingsaccelerator: contains
@@ -117,7 +117,7 @@ user --> setupaccelerator: 11) executes
 setupaccelerator -> terraformaccelerator: 12) creates configuration files
 setupaccelerator .> settingsaccelerator: uses
 
-user ---> cafes: 13) uses  Terraform to create
+user ---> cafes: 13) uses  Terraform to create Azure Enterprise Scale
 cafes .> terraformaccelerator: uses
 
 @enduml
