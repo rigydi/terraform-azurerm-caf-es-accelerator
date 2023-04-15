@@ -7,18 +7,18 @@ settings:
     default_location: "westeurope"
   connectivity:
     deploy: false
-    subscription_id: "bf59a090-7dd1-4b1c-ab12-853f53d793e1"
+    subscription_id: ""
     customize: true
   management:
     deploy: false
-    subscription_id: "d23d0608-39bb-4774-b1f7-9b1bf4956b10"
+    subscription_id: ""
     customize: true
   custom_management_groups:
     launchpad:
       parent_management_group_id: "root"
       id: "launchpad"
       display_name: "Launchpad"
-      subscription_ids: ["4cf21e62-eb45-47bc-ba0b-6bc5f54d08a8"]
+      subscription_ids: [""]
 
 ########################################################
 # Documentation
