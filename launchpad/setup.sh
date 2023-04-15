@@ -1,6 +1,4 @@
-#!/usr/bin/bash
-
-clear
+#!/usr/bin/env bash
 
 echo -e "\e[1;32m====================================================================\e[0m"
 echo -e "\e[1;32m|                        Welcome                                   |\e[0m"
@@ -50,6 +48,8 @@ function handle_error () {
 
 trap 'handle_interrupt' INT
 trap 'handle_error' ERR
+
+print_empty_lines 5
 
 ####################################
 # Introduction
@@ -257,9 +257,9 @@ EOF
       echo "  (__ __)// "
       print_empty_lines 1
       echo "Have a me-wow day!"
-      print_empty_lines 2        
+      print_empty_lines 2     
+         
       # some clean up
-      echo "Removing local tfstate file."
       rm ./*.tfstate* >/dev/null 2>&1
     else
       echo -e "\e[1;32m"Setting up Azure backend failed."\e[0m"

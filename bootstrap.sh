@@ -98,6 +98,7 @@ function handle_error () {
 trap 'handle_interrupt' INT
 trap 'handle_error' ERR
 
+print_empty_lines 5
 
 ###########################################
 # Some preparation steps
@@ -263,6 +264,9 @@ EOF
   echo "" >> $FILE_MAIN
   echo "# Connectivity" >> $FILE_MAIN
   echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FILE_MAIN
+else
+  echo "" >> $FILE_MAIN
+  echo "# Connectivity" >> $FILE_MAIN
 fi
 
 if [ "$CONNECTIVITY_DEPLOY" == true ]; then
@@ -348,6 +352,9 @@ EOF
   echo "# Management" >> $FILE_MAIN
   echo "Adding subscription_id_management to main file."
   echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FILE_MAIN
+else
+  echo "" >> $FILE_MAIN
+  echo "# Management" >> $FILE_MAIN
 fi
 
 if [ "$MANAGEMENT_DEPLOY" == true ]; then
@@ -424,7 +431,7 @@ for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE")
   if [[ "$id" != null ]]; then
     if [[ "$id" == *"launchpad"* ]]; then
       custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
-      custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
+      custom_landing_zones+="    display_name = \"$display_name\"\n"
       custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}\"\n"
       custom_landing_zones+="    subscription_ids = $subscription_ids\n"
       custom_landing_zones+="    archetype_config = {\n"
@@ -466,3 +473,13 @@ if ! terraform fmt > /dev/null 2>&1; then
 else
   echo "Formatting Terraform files."
 fi
+
+print_empty_lines 3
+echo -e '\e[1;32m##############################################\e[0m'
+echo -e '\e[1;32m# ATTENTION! Before manually executing Terraform, e.g. terraform init, make sure you have set the following environment variables:\e[0m'
+echo -e '\e[1;32m# export ARM_TENANT_ID="..." # The AAD tenant of your automation user.\e[0m'
+echo -e '\e[1;32m# export ARM_CLIENT_ID="..." # The Client ID of your automation user.'
+echo -e '\e[1;32m# export ARM_CLIENT_SECRET="..." # The Client Secret of your automation user.\e[0m'
+echo -e '\e[1;32m# export ARM_SUBSCRIPTION_ID="..." # The Launchpad subscription ID.\e[0m'
+echo -e '\e[1;32m# Terraform will use these values for authenticating to Azure, when reading the backend storage.\e[0m'
+echo -e '\e[1;32m##############################################\e[0m'
