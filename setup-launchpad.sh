@@ -26,9 +26,9 @@ DIRECTORY_LAUNCHPAD="launchpad"
 
 TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS)
 SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS)
-BASENAME=$(yq '.settings.launchpad.basename' $FILE_SETTINGS)
-RANDOM_LENGTH=$(yq '.settings.launchpad.random_length' $FILE_SETTINGS)
-LOCATION=$(yq '.settings.launchpad.location' $FILE_SETTINGS)
+BASENAME="launchpad" #$(yq '.settings.launchpad.basename' $FILE_SETTINGS)
+RANDOM_LENGTH=5 #$(yq '.settings.launchpad.random_length' $FILE_SETTINGS)
+LOCATION=$(yq '.settings.es.core.default_location' $FILE_SETTINGS)
 ACCOUNT_TIER=$(yq '.settings.launchpad.account_tier' $FILE_SETTINGS)
 ACCOUNT_REPLICATION_TYPE=$(yq '.settings.launchpad.account_replication_type' $FILE_SETTINGS)
 
