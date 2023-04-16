@@ -108,13 +108,13 @@ fi
 
 if [ -z "$ARM_CLIENT_ID" ]; then
   print_empty_lines 1
-  echo "ARM_CLIENT_ID not specified. Please run the script like this: ./setup <Service Principal Client ID> <Service Principal Secret>"
+  echo "ARM_CLIENT_ID not specified. Please run the script with option flags: -i <Service Principal Client ID> -s <Service Principal Secret>"
   exit 1
 fi
 
 if [ -z "$ARM_CLIENT_SECRET" ]; then
   print_empty_lines 1
-  echo "ARM_CLIENT_SECRET not specified. Please run the script like this: ./setup <Service Principal Client ID> <Service Principal Secret>"
+  echo "ARM_CLIENT_SECRET not specified. Please run the script with option flags: -i <Service Principal Client ID> -s <Service Principal Secret>"
   exit 1
 fi
 
