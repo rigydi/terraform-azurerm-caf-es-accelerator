@@ -8,7 +8,7 @@ FILE_PROVIDERS="terraform.tf"
 FILE_MAIN="main.tf"
 FILE_VARIABLES="variables.tf"
 FILE_TFVARS="terraform.tfvars"
-FILE_SETTINGS="bootstrap.yaml"
+FILE_SETTINGS="settings.yaml"
 FILE_BACKEND_LAUNCHPAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
@@ -17,26 +17,20 @@ array_terraform_files=($FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $
 FOLDER_BACKUP="backup"
 FOLDER_LAUNCHPAD="launchpad"
 
-BACKEND_CONFIGURE=$(yq '.settings.backend.configure' $FILE_SETTINGS)
-# BACKEND_TENANT_ID=$(yq '.settings.backend.tenant_id' $FILE_SETTINGS)
-# BACKEND_SUBSCRIPTION_ID=$(yq '.settings.backend.subscription_id' $FILE_SETTINGS)
-# BACKEND_RESOURCE_GROUP_NAME=$(yq '.settings.backend.resource_group_name' $FILE_SETTINGS)
-# BACKEND_STORAGE_ACCOUNT_NAME=$(yq '.settings.backend.storage_account_name' $FILE_SETTINGS)
-# BACKEND_CONTAINER_NAME=$(yq '.settings.backend.container_name' $FILE_SETTINGS)
-# BACKEND_STATE_FILENAME=$(yq '.settings.backend.key' $FILE_SETTINGS)
+BACKEND_CONFIGURE=$(yq '.settings.es.backend.configure' $FILE_SETTINGS)
 BACKEND_STATE_FILENAME="terraform-caf-es.tfstate"
 
-ROOT_ID=$(yq '.settings.core.root_id' $FILE_SETTINGS)
-ROOT_NAME=$(yq '.settings.core.root_name' $FILE_SETTINGS)
-DEFAULT_LOCATION=$(yq '.settings.core.default_location' $FILE_SETTINGS)
+ROOT_ID=$(yq '.settings.es.core.root_id' $FILE_SETTINGS)
+ROOT_NAME=$(yq '.settings.es.core.root_name' $FILE_SETTINGS)
+DEFAULT_LOCATION=$(yq '.settings.es.core.default_location' $FILE_SETTINGS)
 
-CONNECTIVITY_DEPLOY=$(yq '.settings.connectivity.deploy' $FILE_SETTINGS)
-CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.connectivity.subscription_id' $FILE_SETTINGS)
-CONNECTIVITY_CUSTOM=$(yq '.settings.connectivity.customize' $FILE_SETTINGS)
+CONNECTIVITY_DEPLOY=$(yq '.settings.es.connectivity.deploy' $FILE_SETTINGS)
+CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.es.connectivity.subscription_id' $FILE_SETTINGS)
+CONNECTIVITY_CUSTOM=$(yq '.settings.es.connectivity.customize' $FILE_SETTINGS)
 
-MANAGEMENT_DEPLOY=$(yq '.settings.management.deploy' $FILE_SETTINGS)
-MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.management.subscription_id' $FILE_SETTINGS)
-MANAGEMENT_CUSTOM=$(yq '.settings.management.customize' $FILE_SETTINGS)
+MANAGEMENT_DEPLOY=$(yq '.settings.es.management.deploy' $FILE_SETTINGS)
+MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.es.management.subscription_id' $FILE_SETTINGS)
+MANAGEMENT_CUSTOM=$(yq '.settings.es.management.customize' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -56,22 +50,20 @@ cleanup () {
 }
 
 function backup () {
-
   if [ ! -d "./$FOLDER_BACKUP" ]
   then
-      mkdir -p ./$FOLDER_BACKUP > /dev/null 2>&1
+    mkdir -p ./$FOLDER_BACKUP > /dev/null 2>&1
+    for file in "${array_terraform_files[@]}"
+    do
+      if [[ -z $file ]]
+      then
+        echo "File $file is not existing. No backup necessary."
+      else
+        echo "Backing up: $file"
+        cp "$file" ./$FOLDER_BACKUP > /dev/null 2>&1
+      fi
+    done
   fi
-
-  for file in "${array_terraform_files[@]}"
-  do
-    if [[ -z $file ]]
-    then
-      echo "File $file is not existing. No backup necessary."
-    else
-      echo "Backing up: $file"
-      cp "$file" ./$FOLDER_BACKUP > /dev/null 2>&1
-    fi
-  done
 }
 
 function handle_interrupt () {
@@ -420,11 +412,11 @@ yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 # Loop through the custom management groups and map the values to the fields
 echo "# Custom Management Groups" >> $FILE_MAIN
 custom_landing_zones="custom_landing_zones = {\n"
-for group in $(jq -r '.settings.custom_management_groups | keys[]' "$JSON_FILE"); do
-  id=$(jq -r ".settings.custom_management_groups.$group.id" "$JSON_FILE")
-  display_name=$(jq -r ".settings.custom_management_groups.$group.display_name" "$JSON_FILE")
-  parent_id=$(jq -r ".settings.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
-  subscription_ids=$(jq -c ".settings.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+for group in $(jq -r '.settings.es.custom_management_groups | keys[]' "$JSON_FILE"); do
+  id=$(jq -r ".settings.es.custom_management_groups.$group.id" "$JSON_FILE")
+  display_name=$(jq -r ".settings.es.custom_management_groups.$group.display_name" "$JSON_FILE")
+  parent_id=$(jq -r ".settings.es.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
+  subscription_ids=$(jq -c ".settings.es.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
   echo "Adding custom management group to main file."
 
   # Check if id is not null
