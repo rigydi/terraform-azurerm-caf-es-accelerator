@@ -44,11 +44,11 @@ This repository standardizes and automates:
 - Assign the [Owner](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles) built-in role to the Service Principal with scope on the [Tenant Root Group](https://learn.microsoft.com/en-us/azure/governance/management-groups/overview).
 - Create a Service Principal [secret](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#service-principal-authentication).
 
-**7) Installation Script**
-- Start the installation script by executing
-> cd ./launchpad; ./setup.sh
+**7) Installation**
+- Edit **bootstrap.yaml** according to your needs.
+- Start the installation script by executing:
+> ./setup-launchpad.sh
 
-Follow the instructions.
 
 **8) Azure Resources**
 - The installation procedure will utilize the Terraform executable and configuration files to authenticate to Azure via the previously created Service Principal to deploy the Launchpad resources. Inspect the [main.tf](https://github.com/rigydi/terraform-azurerm-launchpad/blob/main/main.tf) file to see which resources will be deployed.
@@ -62,11 +62,11 @@ Follow the instructions.
 <br/>
 
 **10) Settings**
-- Adjust the file **bootstrap.yaml** according to your needs.
+- Adjust **bootstrap.yaml** according to your needs.
 
 **11) Bootstrap Terraform CAF ES**
 - Start the script by executing
-> ./bootstrap.sh
+> ./bootstrap-enterprise-scale.sh
 
 **12) Execute**
 - The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
