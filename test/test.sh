@@ -1,32 +1,28 @@
 #!/usr/bin/env bash
 
-FILE_TEST="test.sh"
-FILE_LAUNCHPAD_SETUP="setup.sh"
-FILE_BOOTSTRAP_SETUP="bootstrap.sh"
-FILE_BOOTSTRAP_YAML="bootstrap.yaml"
+export TERM=xterm-256color
 
-DIRECTORY_ROOT=$(find / -type f -name $FILE_BOOTSTRAP_SETUP -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
-DIRECTORY_TEST_SOURCE=$(find / -type f -name $FILE_TEST -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
-DIRECTORY_LAUNCHPAD_SOURCE=$(find / -type f -name $FILE_LAUNCHPAD_SETUP -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
+############################
+# Check Inputs
+############################
 
-DIRECTORY_TEST_TARGET="$DIRECTORY_TEST_SOURCE/tmp_testrun"
-DIRECTORY_LAUNCHPAD_TARGET="$DIRECTORY_TEST_TARGET/launchpad"
+while getopts 'i:s:' flag; do
+  case "${flag}" in
+    i) CLIENT_ID="${OPTARG}" ;;
+    s) CLIENT_SECRET="${OPTARG}" ;;
+    *) echo "Invalid option: -$OPTARG" >&2
+       exit 1 ;;
+  esac
+done
 
-function cleanup {
-  if [ -d "$DIRECTORY_TEST_TARGET" ]; then
-    echo "Removed old test run directory."
-    rm -rf $DIRECTORY_TEST_TARGET
-  fi
-}
+if [[ -z "${CLIENT_ID}" || -z "${CLIENT_SECRET}" ]]; then
+  echo "Error: Missing option flag(s). Please run the script with both options: -i <Service Principal Client ID> -s <Service Principal Client Secret>" >&2
+  exit 1
+fi
 
-cleanup
-
-function print_empty_lines() {
-  for (( i=1; i<=$1; i++ ))
-  do
-    echo ""
-  done
-}
+############################
+# Signal Handling
+############################
 
 function handle_interrupt () {
     print_empty_lines 2
@@ -43,66 +39,97 @@ function handle_error () {
 trap 'handle_interrupt' INT
 trap 'handle_error' ERR
 
-cleanup
-
-export TERM=xterm-256color
-
 ############################
-# Launchpad Installation
+# Variables
 ############################
 
-echo "Launchpad: Create launchpad directory."
-mkdir -p $DIRECTORY_LAUNCHPAD_TARGET
+FILE_SETUP_LAUNCHPAD="setup-launchpad.sh"
+FILE_SETUP_ES="bootstrap-enterprise-scale.sh"
+FILE_TEST="test.sh"
+FILE_SETTINGS_YAML="bootstrap.yaml"
 
-echo "Launchpad: Copy launchpad files to $DIRECTORY_LAUNCHPAD_TARGET."
-cp -a $DIRECTORY_LAUNCHPAD_SOURCE/{*.tf,*.sh} $DIRECTORY_LAUNCHPAD_TARGET
+DIRECTORY_ROOT=$(find / -type f -name $FILE_SETUP_ES -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
+DIRECTORY_TEST=$(find / -type f -name $FILE_TEST -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
+DIRECTORY_TEST_TARGET="$DIRECTORY_TEST/tmp_testrun"
+DIRECTORY_TEST_TARGET_LAUNCHPAD="$DIRECTORY_TEST_TARGET/launchpad"
 
-echo "Launchpad: Running terraform apply to create all resources."
-# $1 ARM_CLIENT_ID, $2 ARM_CLIENT_SECRET, $3 ARM_SUBSCRIPTION_ID, $4 ARM_TENANT_ID
-cd $DIRECTORY_LAUNCHPAD_TARGET
-./$FILE_LAUNCHPAD_SETUP <<EOF
-yes
-$1
-$2
-yes
-$3
-$4
-westeurope
-yes
-yes
-yes
-yes
-EOF
+TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS_YAML)
+SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS_YAML)
 
-RETURN_CODE=$?
+export ARM_CLIENT_ID=$CLIENT_ID
+export ARM_CLIENT_SECRET=$CLIENT_SECRET
+export ARM_SUBSCRIPTION_ID=$SUBSCRIPTION_ID
+export ARM_TENANT_ID=$TENANT_ID
 
-if [ $RETURN_CODE -eq 0 ]; then
+############################
+# Some Functions
+############################
+
+function print_empty_lines() {
+  for (( i=1; i<=$1; i++ ))
+  do
+    echo ""
+  done
+}
+
+function cleanup {
+  if [ -d "$DIRECTORY_TEST_TARGET" ]; then
+    echo "Removed old test run directory."
+    rm -rf $DIRECTORY_TEST_TARGET
+  fi
+}
+
+############################
+# Prepare Testrun folder and Files
+############################
+
+print_empty_lines 1
+echo "Creating directory $DIRECTORY_TEST_TARGET."
+mkdir -p $DIRECTORY_TEST_TARGET
+
+print_empty_lines 1
+echo "Copying $FILE_SETTINGS_YAML to directory $DIRECTORY_TEST_TARGET."
+cp -a $DIRECTORY_TEST/$FILE_SETTINGS_YAML $DIRECTORY_TEST_TARGET
+
+############################
+# Launchpad - Installation
+############################
+
+print_empty_lines 1
+echo "Launchpad: Copying $FILE_SETUP_LAUNCHPAD to $DIRECTORY_TEST_TARGET."
+cp -a $DIRECTORY_ROOT/$FILE_SETUP_LAUNCHPAD $DIRECTORY_TEST_TARGET
+
+print_empty_lines 1
+echo "Launchpad: Starting installation."
+cd $DIRECTORY_TEST_TARGET
+if ./$FILE_SETUP_LAUNCHPAD -i $CLIENT_ID -s $CLIENT_SECRET
+then
   echo "Launchpad: Azure resources successfully deployed."
 else
   echo "Launchpad: Azure resource installation failed."
   exit 1
 fi
 
-
 ############################
-# TF-CAF-ES Installation
+# TF-CAF-ES - Installation
 ############################
 
-echo "TF-CAF-ES: Creating directories."
-cp -a $DIRECTORY_ROOT/$FILE_BOOTSTRAP_SETUP $DIRECTORY_TEST_TARGET/
+echo "TF-CAF-ES: Copying $FILE_SETUP_ES to $DIRECTORY_TEST_TARGET."
+cp -a $DIRECTORY_ROOT/$FILE_SETUP_ES $DIRECTORY_TEST_TARGET/
 
-echo "TF-CAF-ES: Copying FILE_BOOTSTRAP_YAML to $DIRECTORY_TEST_TARGET."
-cp -a $DIRECTORY_TEST_SOURCE/$FILE_BOOTSTRAP_YAML $DIRECTORY_TEST_TARGET/
+echo "TF-CAF-ES: Copying FILE_SETTINGS_YAML to $DIRECTORY_TEST_TARGET."
+cp -a $DIRECTORY_TEST/$FILE_SETTINGS_YAML $DIRECTORY_TEST_TARGET/
 
 echo "TF-CAF-ES: Creating Terraform configuration files."
 cd $DIRECTORY_TEST_TARGET
-./$FILE_BOOTSTRAP_SETUP
 
-echo "TF-CAF-ES: Declaring environment variables for Azure authentication."
-export ARM_CLIENT_ID="$1"
-export ARM_CLIENT_SECRET="$2"
-export ARM_SUBSCRIPTION_ID="$3"
-export ARM_TENANT_ID="$4"
+if ./$FILE_SETUP_ES
+then
+  echo "TF-CAF-ES: Configuration files successfully created."
+else
+  echo "TF-CAF-ES: Error while creating configuration files."
+  exit 1
+fi
 
 echo -n "TF-CAF-ES: Initializing Terraform."
 if terraform -chdir=$DIRECTORY_TEST_TARGET init
@@ -146,16 +173,16 @@ fi
 ############################
   
 echo "Launchpad: Removing lifecycle restriction from resources."
-sed -i '/lifecycle/d' $DIRECTORY_LAUNCHPAD_TARGET/main.tf
+sed -i '/lifecycle/d' $DIRECTORY_TEST_TARGET_LAUNCHPAD/main.tf
 
 echo "Launchpad: Pull state to local file."
-terraform -chdir=$DIRECTORY_LAUNCHPAD_TARGET state pull > $DIRECTORY_LAUNCHPAD_TARGET/terraform.tfstate
+terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD state pull > $DIRECTORY_TEST_TARGET_LAUNCHPAD/terraform.tfstate
 
 echo "Launchpad: Remove backend definition."
-rm $DIRECTORY_LAUNCHPAD_TARGET/backend.tf
+rm $DIRECTORY_TEST_TARGET_LAUNCHPAD/backend.tf
 
 echo "Launchpad: Initialize Terraform before destroying."
-if terraform -chdir=$DIRECTORY_LAUNCHPAD_TARGET/ init -migrate-state
+if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD/ init -migrate-state
 then
   print_empty_lines 1
   echo "Launchpad: Successfully initialized Terraform."
@@ -166,12 +193,12 @@ else
 fi
 
 echo "Launchpad: Run terraform destroy."
-if terraform -chdir=$DIRECTORY_LAUNCHPAD_TARGET destroy -auto-approve
+if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD destroy -auto-approve
 then
   print_empty_lines 1
   echo "Launchpad: Resources successfully destroyed."
   print_empty_lines 3
-  echo "Test was successfull."
+  echo "Testrun was successfull."
 else
   print_empty_lines 1
   echo "Launchpad: Resource destruction failed."

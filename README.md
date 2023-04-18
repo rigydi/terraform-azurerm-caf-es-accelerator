@@ -45,7 +45,7 @@ This repository standardizes and automates:
 - Create a Service Principal [secret](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#service-principal-authentication).
 
 **7) Installation**
-- Edit **bootstrap.yaml** according to your needs.
+- Edit **settings.yaml** according to your needs.
 - Start the installation script by executing:
 > ./setup-launchpad.sh
 
@@ -62,14 +62,14 @@ This repository standardizes and automates:
 <br/>
 
 **10) Settings**
-- Adjust **bootstrap.yaml** according to your needs.
+- Adjust **settings.yaml** according to your needs.
 
 **11) Bootstrap Terraform CAF ES**
 - Start the script by executing
 > ./bootstrap-enterprise-scale.sh
 
 **12) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
+- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **settings.yaml**.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
 
 </br>

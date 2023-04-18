@@ -1,9 +1,10 @@
 settings:
   launchpad:
-    tenant_id: ""
-    subscription_id: ""
-    account_tier: "Standard"
-    account_replication_type: "LRS"
+    tenant_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
+    subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
+    location: "e.g. westeurope"
+    account_tier: "e.g. Standard"
+    account_replication_type: "e.g. LRS"
   es:
     backend:
       configure: true/false
@@ -13,18 +14,18 @@ settings:
       default_location: "e.g. westeurope"
     connectivity:
       deploy: true/false
-      subscription_id: ""
+      subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
       customize: true/false
     management:
-      deploy: false
-      subscription_id: ""
-      customize: true
+      deploy: true/false
+      subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
+      customize: true/false
     custom_management_groups:
       launchpad:
         parent_management_group_id: "root"
         id: "launchpad"
         display_name: "Launchpad"
-        subscription_ids: [""]
+        subscription_ids: ["e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"]
 
 ########################################################
 # Documentation
@@ -35,6 +36,7 @@ settings:
 ##################
 # tenant_id: (Required) The ID (string) of the Azure Active Directory Tenant.
 # subscription_id: (Required) The ID (string) of the Azure subscription in which the launchpad resources will be deployed.
+# location: (Required) Defines the region (string) in which the resources will be deployed, e.g. westeurope.
 # account_tier: (Required) Defines the tier (string) for this storage account. Valid options are Standard and Premium. For BlockBlobStorage and FileStorage accounts only Premium is valid. Changing this forces a new resource to be created.
 # account_replication_type: (Required) Defines the type of replication to use for this storage account. Valid options are LRS, GRS, RAGRS, ZRS, GZRS and RAGZRS.
 
