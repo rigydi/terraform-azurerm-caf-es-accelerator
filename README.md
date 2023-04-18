@@ -17,7 +17,7 @@ This repository standardizes and automates:
 </br>
 
 **1) Copy Content**
-- Create a copy this repo in your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
+- Create a copy of this repo in your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
 
 **2) Execution Host**
 - Clone the forked repository to the machine on which the setup procedure will be executed (e.g. local notebook).

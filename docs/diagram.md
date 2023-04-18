@@ -71,7 +71,7 @@ rectangle "Launchpad (LP) - Setup Procedure" as launchpad {
 }
 
 
-user -> github: 1) forks repo to own Github organization
+user -> github: 1) copies content to own Github organization
 user -> machine: 2) clones repo to execution host
 user -> vsc: 3) opens repo in
 
