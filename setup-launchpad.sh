@@ -206,7 +206,7 @@ variable "location" {
   default     = "$LOCATION"
 
   validation {
-    condition     = can(regex("^((east|west|central|north|south)?(us|europe|asia|australia))$", var.location))
+    condition     = can(regex("^((east|west|central|north|south|switzerland)?(us|europe|asia|australia|north))$", var.location))
     error_message = "Invalid Azure region."
   }
 }
