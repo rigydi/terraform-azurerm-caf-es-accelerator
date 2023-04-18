@@ -41,37 +41,40 @@ settings:
 # account_replication_type: (Required) Defines the type of replication to use for this storage account. Valid options are LRS, GRS, RAGRS, ZRS, GZRS and RAGZRS.
 
 ##################
-# backend
+# enterprise scale
 ##################
+###########
+# backend
+###########
 # configure: (Required) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process. If 'true' the backend configuration will be copied from the 'launchpad' folder.
 # key: (Optional if 'configure: false'. Otherwise Required) The name (string) of the Terraform state file.
 
-##################
+###########
 # core
-##################
+###########
 # root_id: (Required) The name (string) of the top management group, which will be created, under which all subsequent Managemet Groups will be created, e.g. "mycompany"
 # root_name: (Required) The Display name (string) of the top Management Group, e.g. "My Company Ltd."
 # default_location: (Required) The default Azure region used for all resources, e.g. "westeurope"
 
-##################
+###########
 # connectivity
-##################
+###########
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_connectivity_resources' variable.
 # subscription_id: (Optional) The connectivitiy subscription ID (string). If left blank, the connectivity will use the default provider.
 # customize: (Required) The option (bool: true/false) to make the variable 'configure_connectivity_resources' available in a separate file containing a local variable presenting all available configuration options.
 
-##################
+###########
 # management
-##################
+###########
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
 # subscription_id: (Optional) The management subscription ID (string). If left blank, the management resources will use the default provider.
 # customize: (Required) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable presenting all available configuration options.
 
-##################
+###########
 # custom management groups (Optional)
 # The predefined 'launchpad' management group is used for the Launchpad subscription.
 # Add more groups after the 'launchpad' group if required by repeating the same block with different values. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. launchpad, mygroup1, mygroup2 etc.).
-################## 
+########### 
 # parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
 # id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1
 # display_name: (Required) The display name (string) of the custom management group
