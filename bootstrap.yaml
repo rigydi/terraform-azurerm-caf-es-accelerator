@@ -5,13 +5,10 @@ settings:
     location: "e.g. westeurope"
     account_tier: "e.g. Standard"
     account_replication_type: "e.g. LRS"
-  es:
-    backend:
-      configure: true/false
+  enterprisescale:
     core:
       root_id: "e.g. myorg"
       root_name: "e.g. My Org Ltd."
-      default_location: "e.g. westeurope"
     connectivity:
       deploy: true/false
       subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
@@ -42,19 +39,13 @@ settings:
 
 ##################
 # enterprise scale
+# For a complete documentation of input variables, check here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale
 ##################
-###########
-# backend
-###########
-# configure: (Required) Decision (bool: true/false) to add backend configuration, which was created during the launchpad setup process. If 'true' the backend configuration will be copied from the 'launchpad' folder.
-# key: (Optional if 'configure: false'. Otherwise Required) The name (string) of the Terraform state file.
-
 ###########
 # core
 ###########
-# root_id: (Required) The name (string) of the top management group, which will be created, under which all subsequent Managemet Groups will be created, e.g. "mycompany"
+# root_id: (Required) The name (string) of the top management group, under which all subsequent Managemet Groups will be created, e.g. "mycompany".
 # root_name: (Required) The Display name (string) of the top Management Group, e.g. "My Company Ltd."
-# default_location: (Required) The default Azure region used for all resources, e.g. "westeurope"
 
 ###########
 # connectivity
@@ -72,8 +63,8 @@ settings:
 
 ###########
 # custom management groups (Optional)
-# The predefined 'launchpad' management group is used for the Launchpad subscription.
-# Add more groups after the 'launchpad' group if required by repeating the same block with different values. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. launchpad, mygroup1, mygroup2 etc.).
+# Add additional management groups if required by repeating the same block with different values. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. mygroup1, mygroup2 etc.).
+# ATTENTION: The launchpad management group is predefined. Do not delete.
 ########### 
 # parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
 # id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1

@@ -17,20 +17,19 @@ array_terraform_files=($FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $
 FOLDER_BACKUP="backup"
 FOLDER_LAUNCHPAD="launchpad"
 
-BACKEND_CONFIGURE=$(yq '.settings.es.backend.configure' $FILE_SETTINGS)
 BACKEND_STATE_FILENAME="terraform-caf-es.tfstate"
 
-ROOT_ID=$(yq '.settings.es.core.root_id' $FILE_SETTINGS)
-ROOT_NAME=$(yq '.settings.es.core.root_name' $FILE_SETTINGS)
-DEFAULT_LOCATION=$(yq '.settings.es.core.default_location' $FILE_SETTINGS)
+ROOT_ID=$(yq '.settings.enterprisescale.core.root_id' $FILE_SETTINGS)
+ROOT_NAME=$(yq '.settings.enterprisescale.core.root_name' $FILE_SETTINGS)
+DEFAULT_LOCATION=$(yq '.settings.launchpad.location' $FILE_SETTINGS)
 
-CONNECTIVITY_DEPLOY=$(yq '.settings.es.connectivity.deploy' $FILE_SETTINGS)
-CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.es.connectivity.subscription_id' $FILE_SETTINGS)
-CONNECTIVITY_CUSTOM=$(yq '.settings.es.connectivity.customize' $FILE_SETTINGS)
+CONNECTIVITY_DEPLOY=$(yq '.settings.enterprisescale.connectivity.deploy' $FILE_SETTINGS)
+CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.connectivity.subscription_id' $FILE_SETTINGS)
+CONNECTIVITY_CUSTOM=$(yq '.settings.enterprisescale.connectivity.customize' $FILE_SETTINGS)
 
-MANAGEMENT_DEPLOY=$(yq '.settings.es.management.deploy' $FILE_SETTINGS)
-MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.es.management.subscription_id' $FILE_SETTINGS)
-MANAGEMENT_CUSTOM=$(yq '.settings.es.management.customize' $FILE_SETTINGS)
+MANAGEMENT_DEPLOY=$(yq '.settings.enterprisescale.management.deploy' $FILE_SETTINGS)
+MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.management.subscription_id' $FILE_SETTINGS)
+MANAGEMENT_CUSTOM=$(yq '.settings.enterprisescale.management.customize' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -113,35 +112,35 @@ fi
 # Create FILE_PROVIDERS
 ###########################################
 
-if [ "$BACKEND_CONFIGURE" == true ]; then
-  if [ -f "./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD" ]
-  then
-    echo "Adding backend definition."
-    echo "# Azure Backend Configuration for Terraform State File Management" >> $FILE_PROVIDERS
-    echo "" >> $FILE_PROVIDERS
-    cat ./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD >> ./$FILE_PROVIDERS
-    sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" ./$FILE_PROVIDERS
-  else
-    echo "No backend definition found in $FOLDER_LAUNCHPAD."
-    echo "Attention! Creating empty backend definition in $FILE_PROVIDERS. Make sure to declare the backend in file $FILE_PROVIDERS."
+
+if [ -f "./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD" ]
+then
+  echo "Adding backend definition."
+  echo "# Azure Backend Configuration for Terraform State File Management" >> $FILE_PROVIDERS
+  echo "" >> $FILE_PROVIDERS
+  cat ./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD >> ./$FILE_PROVIDERS
+  sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" ./$FILE_PROVIDERS
+else
+  echo "No backend definition found in $FOLDER_LAUNCHPAD."
+  echo "Attention! Creating empty backend definition in $FILE_PROVIDERS. Make sure to declare the backend in file $FILE_PROVIDERS."
 
 cat <<EOF >> $FILE_PROVIDERS
 # Terraform State File Backend Configuration"
 
 terraform {
-  backend "azurerm" {
-    tenant_id = ""
-    subscription_id = ""
-    resource_group_name = ""
-    storage_account_name = ""
-    container_name = ""
-    key = ""
-  }
+backend "azurerm" {
+  tenant_id = ""
+  subscription_id = ""
+  resource_group_name = ""
+  storage_account_name = ""
+  container_name = ""
+  key = ""
+}
 }
 EOF
 
-  fi
 fi
+
 
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
@@ -412,11 +411,11 @@ yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 # Loop through the custom management groups and map the values to the fields
 echo "# Custom Management Groups" >> $FILE_MAIN
 custom_landing_zones="custom_landing_zones = {\n"
-for group in $(jq -r '.settings.es.custom_management_groups | keys[]' "$JSON_FILE"); do
-  id=$(jq -r ".settings.es.custom_management_groups.$group.id" "$JSON_FILE")
-  display_name=$(jq -r ".settings.es.custom_management_groups.$group.display_name" "$JSON_FILE")
-  parent_id=$(jq -r ".settings.es.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
-  subscription_ids=$(jq -c ".settings.es.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[]' "$JSON_FILE"); do
+  id=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.id" "$JSON_FILE")
+  display_name=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.display_name" "$JSON_FILE")
+  parent_id=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
+  subscription_ids=$(jq -c ".settings.enterprisescale.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
   echo "Adding custom management group to main file."
 
   # Check if id is not null

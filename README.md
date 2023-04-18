@@ -1,4 +1,4 @@
-# Terraform CAF Enterprise Scale Accelerator
+# Terraform-Azure-Enterprise-Scale-Accelerator
 
 This repository standardizes and automates:
 1) the deployment of an Azure backend storage for Terraform state file management (Launchpad)
@@ -47,7 +47,7 @@ This repository standardizes and automates:
 **7) Installation**
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
-> ./setup-launchpad.sh
+> ./setup-launchpad.sh -i 'Service Principal Application/Client ID>' -s 'Service Principal Secret'
 
 
 **8) Azure Resources**
@@ -69,7 +69,7 @@ This repository standardizes and automates:
 > ./bootstrap-enterprise-scale.sh
 
 **12) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
+- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
 
 </br>
