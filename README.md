@@ -58,18 +58,18 @@ This repository standardizes and automates:
 
 <br/>
 
-## Terraform CAF Enterprise Scale Accelerator
+## Terraform Enterprise Scale Accelerator
 <br/>
 
 **10) Settings**
 - Adjust **bootstrap.yaml** according to your needs.
 
-**11) Bootstrap Terraform CAF ES**
+**11) Bootstrap Terraform Enterprise Scale**
 - Start the script by executing
 > ./bootstrap-enterprise-scale.sh
 
 **12) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs.
+- The script creates the corresponding Terraform Enterprise Scale files according to your inputs.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
 
 </br>
