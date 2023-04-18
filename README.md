@@ -62,14 +62,14 @@ This repository standardizes and automates:
 <br/>
 
 **10) Settings**
-- Adjust **settings.yaml** according to your needs.
+- Adjust **bootstrap.yaml** according to your needs.
 
 **11) Bootstrap Terraform CAF ES**
 - Start the script by executing
 > ./bootstrap-enterprise-scale.sh
 
 **12) Execute**
-- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **settings.yaml**.
+- The script creates the corresponding Terraform CAF Enterprise Scale files according to your inputs in **bootstrap.yaml**.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
 
 </br>
