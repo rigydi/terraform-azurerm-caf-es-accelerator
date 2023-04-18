@@ -20,7 +20,7 @@ This repository standardizes and automates:
 - Create a copy of this repo in your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
 
 **2) Execution Host**
-- Clone the forked repository to the machine on which the setup procedure will be executed (e.g. local notebook).
+- Clone your new repository to the machine on which the setup procedure will be executed (e.g. local notebook).
 
 **3) Visual Studio Code**
 - [Download](https://code.visualstudio.com/Download) and install Visual Studio Code (VSC).
