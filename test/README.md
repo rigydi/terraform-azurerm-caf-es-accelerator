@@ -1,7 +1,7 @@
 # How to Start a Testrun
 ## Prepare Settings
 
-Copy **bootstrap.yaml** from from the repo root to the folder **test**. Edit the yaml file according to your requirements.
+Copy **bootstrap.yaml** from from the repo root to the **test** folder. Edit the yaml file according to your requirements.
 
 </br>
 
