@@ -6,7 +6,7 @@ Copy **bootstrap.yaml** from from the repo root to the **test** folder. Edit the
 </br>
 
 ## Testrun
-To execute the script (authenticate to Azure) you need a [Azure Service Principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
+To execute the script (authenticate to Azure) you need an [Azure Service Principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
 
 Execute the script:
 
