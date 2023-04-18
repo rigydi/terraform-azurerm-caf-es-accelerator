@@ -45,7 +45,7 @@ This repository standardizes and automates:
 - Create a Service Principal [secret](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#service-principal-authentication).
 
 **7) Installation**
-- Edit **settings.yaml** according to your needs.
+- Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
 > ./setup-launchpad.sh
 
