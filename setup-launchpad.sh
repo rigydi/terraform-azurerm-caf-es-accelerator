@@ -405,4 +405,10 @@ fi
 # Some post steps
 ####################################
 
+print_empty_lines 2
+echo "Post Steps: Formatting all Terraform files."
 terraform -chdir=$DIRECTORY_LAUNCHPAD fmt >/dev/null 2>&1
+
+echo "Post Steps: Removing local state file."
+print_empty_lines 2
+rm -f $DIRECTORY_LAUNCHPAD/terraform.tfstate* >/dev/null 2>&1
