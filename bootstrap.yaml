@@ -96,8 +96,8 @@ settings:
 ###########
 # please_replace_with_name_of_the_policy: (Required) Replace with one of:
 # - Azure_Security_Benchmark
-# - CIS_Microsoft_Azure_Foundations_Benchmark_v1.4.0
+# - CIS
 # - ISO_27001_2013
-# - NIST_SP_800-53_Rev._5
+# - NIST_SP_800_53_Rev_5
 # assign: (Required) Assign the policy (bool: true or false)?
 # management_group_id: (Required) Specify the ID (name) of the management group to which the policy will be assigned. The name can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc. These are the standard Enterprise Scale management groups.

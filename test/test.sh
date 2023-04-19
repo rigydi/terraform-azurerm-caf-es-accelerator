@@ -21,6 +21,11 @@ if [[ -z "${CLIENT_ID}" || -z "${CLIENT_SECRET}" || -z "${ACTION}" ]]; then
   exit 1
 fi
 
+if [[ "${ACTION}" != "deploy" && "${ACTION}" != "destroy" && "${ACTION}" != "fullrun" ]]; then
+  echo "Error: Invalid value for -a option. Must be one of: deploy, destroy, fullrun" >&2
+  exit 1
+fi
+
 ############################
 # Signal Handling
 ############################

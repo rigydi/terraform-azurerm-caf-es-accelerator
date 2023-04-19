@@ -584,7 +584,7 @@ EOF
 ######################
 cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_cis.json
 {
-    "name": "CIS_Microsoft_Azure_Foundations_Benchmark_v1.4.0",
+    "name": "CIS",
     "type": "Microsoft.Authorization/policyAssignments",
     "apiVersion": "2019-09-01",
     "properties": {
@@ -644,7 +644,7 @@ EOF
 ######################
 cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_nist.json
 {
-    "name": "NIST_SP_800-53_Rev._5",
+    "name": "NIST_SP_800_53_Rev_5",
     "type": "Microsoft.Authorization/policyAssignments",
     "apiVersion": "2019-09-01",
     "properties": {
