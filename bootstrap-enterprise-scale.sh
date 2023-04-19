@@ -13,11 +13,17 @@ FILE_BACKEND_LAUNCHPAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
 
-array_terraform_files=($FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $FILE_SETTINGS $FILE_LOCALS_CONNECTIVITY $FILE_LOCALS_MANAGEMENT)
+# Read the yaml file and convert it to JSON
+YAML_FILE=$FILE_SETTINGS
+JSON_FILE="bootstrap.json"
+yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
+
 FOLDER_BACKUP="backup"
 FOLDER_LAUNCHPAD="launchpad"
+FOLDER_LIBRARY="lib"
+FOLDER_POLICY_ASSIGNMENTS="$FOLDER_LIBRARY/policy_assignments"
 
-BACKEND_STATE_FILENAME="terraform-caf-es.tfstate"
+BACKEND_STATE_FILENAME="terraform-enterprise-scale.tfstate"
 
 ROOT_ID=$(yq '.settings.enterprisescale.core.root_id' $FILE_SETTINGS)
 ROOT_NAME=$(yq '.settings.enterprisescale.core.root_name' $FILE_SETTINGS)
@@ -30,6 +36,10 @@ CONNECTIVITY_CUSTOM=$(yq '.settings.enterprisescale.connectivity.customize' $FIL
 MANAGEMENT_DEPLOY=$(yq '.settings.enterprisescale.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.management.subscription_id' $FILE_SETTINGS)
 MANAGEMENT_CUSTOM=$(yq '.settings.enterprisescale.management.customize' $FILE_SETTINGS)
+
+MANAGEMENT_GROUP_BUILTIN_CORP=$(yq '.settings.enterprisescale.additional_builtin_management_groups.corp' $FILE_SETTINGS)
+MANAGEMENT_GROUP_BUILTIN_ONLINE=$(yq '.settings.enterprisescale.additional_builtin_management_groups.online' $FILE_SETTINGS)
+MANAGEMENT_GROUP_BUILTIN_SAP=$(yq '.settings.enterprisescale.additional_builtin_management_groups.sap' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -45,24 +55,22 @@ function print_empty_lines() {
 
 # clean up files
 cleanup () {
-  rm -rvf *.tf .terraform* *.tfvars *.tfstate* >/dev/null 2>&1
+  rm $FOLDER_LIBRARY -rvf *.tf .terraform* *.tfvars *.tfstate*  >/dev/null 2>&1
 }
 
 function backup () {
-  if [ ! -d "./$FOLDER_BACKUP" ]
-  then
-    mkdir -p ./$FOLDER_BACKUP > /dev/null 2>&1
-    for file in "${array_terraform_files[@]}"
-    do
-      if [[ -z $file ]]
-      then
-        echo "File $file is not existing. No backup necessary."
-      else
-        echo "Backing up: $file"
-        cp "$file" ./$FOLDER_BACKUP > /dev/null 2>&1
-      fi
-    done
-  fi
+  array_backup=($FOLDER_LIBRARY $FILE_PROVIDERS $FILE_MAIN $FILE_VARIABLES $FILE_TFVARS $FILE_SETTINGS $FILE_LOCALS_CONNECTIVITY $FILE_LOCALS_MANAGEMENT)
+  mkdir -p ./$FOLDER_BACKUP > /dev/null 2>&1
+  for element in "${array_backup[@]}"
+  do
+    if [[ -e $element ]]
+    then
+      echo "Backing up: $element"
+      cp -a "$element" ./$FOLDER_BACKUP/ > /dev/null 2>&1
+    else
+      echo "$element is not existing. No backup necessary."
+    fi
+  done
 }
 
 function handle_interrupt () {
@@ -138,9 +146,7 @@ backend "azurerm" {
 }
 }
 EOF
-
 fi
-
 
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
@@ -396,17 +402,66 @@ EOF
   echo "configure_management_resources = local.configure_management_resources" >> $FILE_MAIN
 fi
 
+###########################################
+# Additional Built-In Management Groups
+###########################################
+
+if [[ "$MANAGEMENT_GROUP_BUILTIN_CORP" == "true" || "$MANAGEMENT_GROUP_BUILTIN_ONLINE" == "true" || "$MANAGEMENT_GROUP_BUILTIN_SAP" == "true" ]]
+then
+  echo "" >> $FILE_MAIN
+  echo "# Additional Built-In Management Groups" >> $FILE_MAIN
+fi
+
+if [ "$MANAGEMENT_GROUP_BUILTIN_CORP" == "true" ]
+then
+  echo "Adding CORP Management Group to main file."
+  echo "deploy_corp_landing_zones = var.deploy_corp_landing_zones" >> $FILE_MAIN
+
+cat <<EOF >> $FILE_VARIABLES
+
+variable "deploy_corp_landing_zones" {
+  type        = bool
+  description = "If set to true, module will deploy the \"Corp\" Management Group, including \"out of the box\" policies and roles."
+  default     = true
+}
+EOF
+fi
+
+if [ "$MANAGEMENT_GROUP_BUILTIN_ONLINE" == "true" ]
+then
+  echo "Adding ONLINE Management Group to main file."
+  echo "deploy_online_landing_zones = var.deploy_online_landing_zones" >> $FILE_MAIN
+
+cat <<EOF >> $FILE_VARIABLES
+
+variable "deploy_online_landing_zones" {
+  type        = bool
+  description = "If set to true, module will deploy the \"Online\" Management Group, including \"out of the box\" policies and roles."
+  default     = true
+}
+EOF
+fi
+
+if [ "$MANAGEMENT_GROUP_BUILTIN_SAP" == "true" ]
+then
+  echo "Adding SAP Management Group to main file."
+  echo "deploy_sap_landing_zones = var.deploy_sap_landing_zones" >> $FILE_MAIN
+
+cat <<EOF >> $FILE_VARIABLES
+
+variable "deploy_sap_landing_zones" {
+  type        = bool
+  description = "If set to true, module will deploy the \"SAP\" Management Group, including \"out of the box\" policies and roles."
+  default     = true
+}
+EOF
+fi
 
 ###########################################
 # Custom Management Groups
 ###########################################
 
 echo "" >> $FILE_MAIN
-
-# Read the yaml file and convert it to JSON
-YAML_FILE=$FILE_SETTINGS
-JSON_FILE="settings.json"
-yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 
 # Loop through the custom management groups and map the values to the fields
 echo "# Custom Management Groups" >> $FILE_MAIN
@@ -447,8 +502,172 @@ for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[
 done
 custom_landing_zones+="}"
 
-rm $JSON_FILE > /dev/null 2>&1
 echo -e "$custom_landing_zones" >> $FILE_MAIN
+
+###########################################
+# Policies
+###########################################
+
+echo "" >> $FILE_MAIN
+echo "library_path = \"\${path.root}/lib\"" >> $FILE_MAIN
+mkdir -p $FOLDER_POLICY_ASSIGNMENTS
+
+# Read the JSON file and extract the policies and management_group_id
+policies=$(jq -r '.settings.enterprisescale.policies | keys[]' $JSON_FILE)
+mgmt_group_ids=$(jq -r '.settings.enterprisescale.policies[].management_group_id' $JSON_FILE)
+
+# Loop over the management_group_id
+while read -r mgmt_group_id; do
+  # Create the file name
+  file_name="archetype_extension_es_${mgmt_group_id}.tmpl.json"
+
+  # Get the policies for this management_group_id that have assign set to true
+  mgmt_policies=$(jq -r --arg mgmt_group_id "$mgmt_group_id" \
+    '.settings.enterprisescale.policies | to_entries[] | select(.value.management_group_id == $mgmt_group_id and .value.assign == true) | .key' $JSON_FILE)
+
+  # Check if there are any policies to process
+  if [ -n "$mgmt_policies" ]; then
+    # Create the JSON content
+    json_content=$(jq -n --arg mgmt_group_id "$mgmt_group_id" --argjson policy_assignments "$(echo "$mgmt_policies" | jq -R . | jq -cs .)" \
+      '{
+        ("extend_es_\($mgmt_group_id)"): {
+          policy_assignments: $policy_assignments,
+          policy_definitions: [],
+          policy_set_definitions: [],
+          role_definitions: [],
+          archetype_config: {
+            access_control: {}
+          }
+        }
+      }')
+
+    # Write the JSON content to the file
+    echo "$json_content" > $FOLDER_LIBRARY/"$file_name"
+  fi
+done <<< "$mgmt_group_ids" | sort -u
+
+###########################################
+# Create Repository of Policy Assignments
+###########################################
+######################
+# Azure Security Benchmark
+######################
+cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_azure_security_benchmark.json
+{
+    "name": "Azure_Security_Benchmark",
+    "type": "Microsoft.Authorization/policyAssignments",
+    "apiVersion": "2019-09-01",
+    "properties": {
+        "description": "The Azure Security Benchmark initiative represents the policies and controls implementing security recommendations defined in Azure Security Benchmark v3, see https://aka.ms/azsecbm. This also serves as the Microsoft Defender for Cloud default policy initiative. You can directly assign this initiative, or manage its policies and compliance results within Microsoft Defender for Cloud.",
+        "displayName": "Azure Security Benchmark",
+        "notScopes": [],
+        "parameters": {
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/1f3afdf9-d0c9-4c3d-847f-89da613e70a8",
+        "nonComplianceMessages": [
+          {
+            "message": "Azure Security Benchmark policy controls {enforcementMode} be enforced."
+          }
+        ],
+        "scope": "${current_scope_resource_id}",
+        "enforcementMode": null
+    },
+    "location": "\${default_location}",
+    "identity": {
+        "type": "SystemAssigned"
+    }
+}
+EOF
+
+######################
+# CIS_Microsoft_Azure_Foundations_Benchmark_v1.4.0
+######################
+cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_cis.json
+{
+    "name": "CIS",
+    "type": "Microsoft.Authorization/policyAssignments",
+    "apiVersion": "2019-09-01",
+    "properties": {
+        "description": "The Center for Internet Security (CIS) is a nonprofit entity whose mission is to 'identify, develop, validate, promote, and sustain best practice solutions for cyberdefense.' CIS benchmarks are configuration baselines and best practices for securely configuring a system. These policies address a subset of CIS Microsoft Azure Foundations Benchmark v1.4.0 controls. For more information, visit https://aka.ms/cisazure130-initiative.",
+        "displayName": "CIS Microsoft Azure Foundations Benchmark v1.4.0",
+        "notScopes": [],
+        "parameters": {
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/c3f5c4d9-9a1d-4a99-85c0-7f93e384d5c5",
+        "nonComplianceMessages": [
+          {
+            "message": "CIS Microsoft Azure Foundations Benchmark v1.4.0 policy controls {enforcementMode} be enforced."
+          }
+        ],
+        "scope": "${current_scope_resource_id}",
+        "enforcementMode": null
+    },
+    "location": "\${default_location}",
+    "identity": {
+        "type": "SystemAssigned"
+    }
+}
+EOF
+
+######################
+# ISO_27001_2013
+######################
+cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_iso_27001_2013.json
+{
+    "name": "ISO_27001_2013",
+    "type": "Microsoft.Authorization/policyAssignments",
+    "apiVersion": "2019-09-01",
+    "properties": {
+        "description": "The International Organization for Standardization (ISO) 27001 standard provides requirements for establishing, implementing, maintaining, and continuously improving an Information Security Management System (ISMS). These policies address a subset of ISO 27001:2013 controls. Additional policies will be added in upcoming releases. For more information, visit https://aka.ms/iso27001-init.",
+        "displayName": "ISO 27001:2013",
+        "notScopes": [],
+        "parameters": {
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/89c6cddc-1c73-4ac1-b19c-54d1a15a42f2",
+        "nonComplianceMessages": [
+          {
+            "message": "ISO 27001:2013 policy controls {enforcementMode} be enforced."
+          }
+        ],
+        "scope": "${current_scope_resource_id}",
+        "enforcementMode": null
+    },
+    "location": "\${default_location}",
+    "identity": {
+        "type": "SystemAssigned"
+    }
+}
+EOF
+
+######################
+# ISO_27001_2013
+######################
+cat <<EOF > $FOLDER_POLICY_ASSIGNMENTS/policy_assignment_nist.json
+{
+    "name": "NIST_SP_800_53_Rev_5",
+    "type": "Microsoft.Authorization/policyAssignments",
+    "apiVersion": "2019-09-01",
+    "properties": {
+        "description": "National Institute of Standards and Technology (NIST) SP 800-53 Rev. 5 provides a standardized approach for assessing, monitoring and authorizing cloud computing products and services to manage information security risk. These policies address a subset of NIST SP 800-53 R5 controls. Additional policies will be added in upcoming releases. For more information, visit https://aka.ms/nist800-53r5-initiative.",
+        "displayName": "NIST SP 800-53 Rev. 5",
+        "notScopes": [],
+        "parameters": {
+        },
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/179d1daa-458f-4e47-8086-2a68d0d6c38f",
+        "nonComplianceMessages": [
+          {
+            "message": "NIST SP 800-53 Rev. 5 policy controls {enforcementMode} be enforced."
+          }
+        ],
+        "scope": "${current_scope_resource_id}",
+        "enforcementMode": null
+    },
+    "location": "\${default_location}",
+    "identity": {
+        "type": "SystemAssigned"
+    }
+}
+EOF
 
 ###########################################
 # Post steps
@@ -457,6 +676,8 @@ echo -e "$custom_landing_zones" >> $FILE_MAIN
 # Add closing bracket to FILE_MAIN
 echo "Adding closing bracket to main file."
 echo "}" >> $FILE_MAIN
+
+rm $JSON_FILE > /dev/null 2>&1
 
 # Format all Terraform files
 if ! terraform fmt > /dev/null 2>&1; then
@@ -474,3 +695,8 @@ echo -e '\e[1;32m# export ARM_CLIENT_SECRET="..." # The Client Secret of your au
 echo -e '\e[1;32m# export ARM_SUBSCRIPTION_ID="..." # The Launchpad subscription ID.\e[0m'
 echo -e '\e[1;32m# Terraform will use these values for authenticating to Azure, when reading the backend storage.\e[0m'
 echo -e '\e[1;32m##############################################\e[0m'
+print_empty_lines 3
+
+
+
+

@@ -7,11 +7,6 @@ This repository standardizes and automates:
 </br>
 
 # Setup Procedure
-
-![Diagram](./docs/Diagram.svg "Diagram")
-
-<br/>
-
 ## Preparation
 
 </br>
@@ -71,6 +66,10 @@ This repository standardizes and automates:
 **12) Execute**
 - The script creates the corresponding Terraform Enterprise Scale files according to your inputs.
 - Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
+
+</br>
+
+![Diagram](./docs/Diagram.svg "Diagram")
 
 </br>
 
