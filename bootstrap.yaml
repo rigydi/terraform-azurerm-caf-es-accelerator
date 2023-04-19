@@ -17,12 +17,20 @@ settings:
       deploy: true/false
       subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
       customize: true/false
+    additional_builtin_management_groups:
+      corp: true/false
+      online: true/false
+      sap: true/false
     custom_management_groups:
       launchpad:
         parent_management_group_id: "root"
         id: "launchpad"
         display_name: "Launchpad"
         subscription_ids: ["e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"]
+    policies:
+      please_replace_with_name_of_the_policy:
+        assign: true/false
+        management_group_id: ""
 
 ########################################################
 # Documentation
@@ -39,6 +47,7 @@ settings:
 
 ##################
 # enterprise scale
+#
 # For a complete documentation of input variables, check here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale
 ##################
 ###########
@@ -62,11 +71,33 @@ settings:
 # customize: (Required) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable presenting all available configuration options.
 
 ###########
+# additional_builtin_management_groups (Required)
+###########
+# corp: Deploy (bool: true/false) CORP Management Group including out-of-the-box policies and roles?
+# online: Deploy (bool: true/false) ONLINE Management Group including out-of-the-box policies and roles?
+# sap: Deploy (bool: true/false) SAP Management Group including out-of-the-box policies and roles?
+
+###########
 # custom management groups (Optional)
+#
 # Add additional management groups if required by repeating the same block with different values. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. mygroup1, mygroup2 etc.).
 # ATTENTION: The launchpad management group is predefined. Do not delete.
 ########### 
-# parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc.
+# parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc. These are the standard Enterprise Scale management groups.
 # id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1
 # display_name: (Required) The display name (string) of the custom management group
 # subscription_ids: (Optional) A list of subscription IDs (list of strings) connected to this management group, e.g. ["xxx-xxx-xxx-xxx", "xxx-xxx-xxx-xxx"]. Leave blank, if no subscriptions should be connected to this management group.
+
+###########
+# policies (Optional)
+#
+# There are several Azure built-in policies predefined within the bootstrap script. They can be activated by the fields in this section.
+# Repeat the block for additional policy assignments.
+###########
+# please_replace_with_name_of_the_policy: (Required) Replace with one of:
+# - Azure_Security_Benchmark
+# - CIS_Microsoft_Azure_Foundations_Benchmark_v1.4.0
+# - ISO_27001_2013
+# - NIST_SP_800-53_Rev._5
+# assign: (Required) Assign the policy (bool: true or false)?
+# management_group_id: (Required) Specify the ID (name) of the management group to which the policy will be assigned. The name can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc. These are the standard Enterprise Scale management groups.
