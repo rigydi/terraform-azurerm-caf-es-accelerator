@@ -11,8 +11,7 @@ This repository standardizes and automates:
 You:
 1) fill out **bootstrap.yaml**
 2) execute **setup-launchpad.sh**
-3) execute **bootstrap-enterprise-scale.sh**
-4) execute **Terraform** to deploy Enterprise Scale resources
+3) execute **bootstrap-enterprise-scale.sh** and **Terraform** to deploy Enterprise Scale resources
 
 Please read the next chapters for detailed instructions.
 
