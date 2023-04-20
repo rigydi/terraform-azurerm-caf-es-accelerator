@@ -6,15 +6,26 @@ This repository standardizes and automates:
 
 </br>
 
-# Setup Procedure
-## Preparation
+# In a Nutshell
+
+You:
+1) fill out **bootstrap.yaml**
+2) execute **setup-launchpad.sh**
+3) execute **bootstrap-enterprise-scale.sh**
+4) execute **Terraform** to deploy Enterprise Scale resources
+
+Please read the next chapters for detailed instructions.
+
+</br>
+
+# Prepare Host for Setup Procedure
 
 </br>
 
 **1) Copy Content**
 - Create a copy of this repo in your own [Github Organization](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations).
 
-**2) Execution Host**
+**2) Host**
 - Clone your new repository to the machine on which the setup procedure will be executed (e.g. local notebook).
 
 **3) Visual Studio Code**
@@ -27,7 +38,7 @@ This repository standardizes and automates:
 
 </br>
 
-## Launchpad
+# Setup Launchpad
 
 </br>
 
@@ -42,18 +53,18 @@ This repository standardizes and automates:
 **7) Installation**
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
-> ./setup-launchpad.sh -i 'Service Principal Application/Client ID>' -s 'Service Principal Secret'
+> ./**setup-launchpad.sh** -i 'Service Principal Application/Client ID>' -s 'Service Principal Secret'
 
 
 **8) Azure Resources**
-- The installation procedure will utilize the Terraform executable and configuration files to authenticate to Azure via the previously created Service Principal to deploy the Launchpad resources. Inspect the [main.tf](https://github.com/rigydi/terraform-azurerm-launchpad/blob/main/main.tf) file to see which resources will be deployed.
+- Inspect the [main.tf](https://github.com/rigydi/terraform-azurerm-launchpad/blob/main/main.tf) file to see which resources will be deployed.
 
 **9) Terraform State File**
 - In the last step of the installation procedure, the installation script will configure the [Azure Backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm) to host the [Terraform state file](https://developer.hashicorp.com/terraform/language/state).
 
 <br/>
 
-## Terraform Enterprise Scale Accelerator
+# Setup Terraform Enterprise Scale
 <br/>
 
 **10) Settings**
@@ -61,24 +72,26 @@ This repository standardizes and automates:
 
 **11) Bootstrap Terraform Enterprise Scale**
 - Start the script by executing
-> ./bootstrap-enterprise-scale.sh
+> ./**bootstrap-enterprise-scale.sh**
 
 **12) Execute**
-- The script creates the corresponding Terraform Enterprise Scale files according to your inputs.
-- Adjust the previously created Terraform files if required. Continue by using standard Terraform commands such as 'terraform init' and 'terraform apply'.
+- The script creates the required Terraform Enterprise Scale files according to your inputs. Adjust the Terraform files if required.
+- Continue by using standard Terraform commands such as **terraform init** and **terraform apply**.
 
 </br>
+
+# Setup Diagram
 
 ![Diagram](./docs/Diagram.svg "Diagram")
 
 </br>
 
-## Examples
+# Examples
 
 Examples can be found in the [examples](./examples/) folder.
 
 </br>
 
-## Documentation
+# Documentation
 
 Additional documentation can be found in folder [docs](./docs).
