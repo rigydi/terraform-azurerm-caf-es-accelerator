@@ -17,6 +17,10 @@ settings:
       deploy: true/false
       subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
       customize: true/false
+    identity:
+      deploy: true/false
+      subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
+      customize: true/false
     additional_builtin_management_groups:
       corp: true/false
       online: true/false
@@ -48,7 +52,9 @@ settings:
 ##################
 # enterprise scale
 #
+# ATTENTION!!!
 # For a complete documentation of input variables, check here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale
+#
 ##################
 ###########
 # core
@@ -69,6 +75,13 @@ settings:
 # deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_management_resources' variable.
 # subscription_id: (Optional) The management subscription ID (string). If left blank, the management resources will use the default provider.
 # customize: (Required) The option (bool: true/false) to make the variable 'configure_management_resources' available in a separate file containing a local variable presenting all available configuration options.
+
+###########
+# identity
+###########
+# deploy: (Required) Changes the default value (bool: true/false) of variable 'deploy_identity_resources' variable.
+# subscription_id: (Optional) The identity subscription ID (string). If left blank, the identity resources will use the default provider.
+# customize: (Required) The option (bool: true/false) to make the variable 'configure_identity_resources' available in a separate file containing a local variable presenting all available configuration options.
 
 ###########
 # additional_builtin_management_groups (Required)

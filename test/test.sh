@@ -80,7 +80,8 @@ function print_empty_lines() {
 
 function cleanup {
   if [ -d "$DIRECTORY_TEST_TARGET" ]; then
-    echo "Removed old test run directory."
+    print_empty_lines 1
+    echo "Preparations: Removing old test run directory."
     rm -rf $DIRECTORY_TEST_TARGET
   fi
 }
@@ -91,12 +92,11 @@ function cleanup {
 
 if [[ "$ACTION" == "deploy" || "$ACTION" == "fullrun" ]]
 then
-  print_empty_lines 1
-  echo "Creating directory $DIRECTORY_TEST_TARGET."
+  cleanup
+  echo "Preparations: Creating directory $DIRECTORY_TEST_TARGET."
   mkdir -p $DIRECTORY_TEST_TARGET
 
-  print_empty_lines 1
-  echo "Copying $FILE_SETTINGS_YAML to directory $DIRECTORY_TEST_TARGET."
+  echo "Preparations: Copying $FILE_SETTINGS_YAML to directory $DIRECTORY_TEST_TARGET."
   cp -a $DIRECTORY_TEST/$FILE_SETTINGS_YAML $DIRECTORY_TEST_TARGET
 fi
 
@@ -110,7 +110,6 @@ then
   echo "Launchpad: Copying $FILE_SETUP_LAUNCHPAD to $DIRECTORY_TEST_TARGET."
   cp -a $DIRECTORY_ROOT/$FILE_SETUP_LAUNCHPAD $DIRECTORY_TEST_TARGET
 
-  print_empty_lines 1
   echo "Launchpad: Starting installation."
   cd $DIRECTORY_TEST_TARGET
   if ./$FILE_SETUP_LAUNCHPAD -i $CLIENT_ID -s $CLIENT_SECRET
@@ -128,6 +127,7 @@ fi
 
 if [[ "$ACTION" == "deploy" || "$ACTION" == "fullrun" ]]
 then
+  print_empty_lines 1
   echo "TF-CAF-ES: Copying $FILE_SETUP_ES to $DIRECTORY_TEST_TARGET."
   cp -a $DIRECTORY_ROOT/$FILE_SETUP_ES $DIRECTORY_TEST_TARGET/
 
@@ -146,6 +146,7 @@ then
   fi
 
   echo -n "TF-CAF-ES: Initializing Terraform."
+  print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET init
   then
     print_empty_lines 1
@@ -157,6 +158,7 @@ then
   fi
 
   echo -n "TF-CAF-ES: Creating Azure resouces."
+  print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET apply -auto-approve
   then
     print_empty_lines 1
@@ -174,7 +176,9 @@ fi
 
 if [[ "$ACTION" == "destroy" || "$ACTION" == "fullrun" ]]
 then
+  print_empty_lines 1
   echo -n "TF-CAF-ES: Destroying Terraform resources."
+  print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET destroy -auto-approve
   then
     print_empty_lines 1
@@ -202,6 +206,7 @@ then
   rm $DIRECTORY_TEST_TARGET_LAUNCHPAD/backend.tf
 
   echo "Launchpad: Initialize Terraform before destroying."
+  print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD/ init -migrate-state
   then
     print_empty_lines 1
@@ -213,6 +218,7 @@ then
   fi
 
   echo "Launchpad: Run terraform destroy."
+  print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD destroy -auto-approve
   then
     print_empty_lines 1
