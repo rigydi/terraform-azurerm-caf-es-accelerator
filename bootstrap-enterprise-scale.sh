@@ -12,6 +12,7 @@ FILE_SETTINGS="bootstrap.yaml"
 FILE_BACKEND_LAUNCHPAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
+FILE_LOCALS_IDENTITY="settings.identity.tf"
 
 # Read the yaml file and convert it to JSON
 YAML_FILE=$FILE_SETTINGS
@@ -40,6 +41,11 @@ MANAGEMENT_CUSTOM=$(yq '.settings.enterprisescale.management.customize' $FILE_SE
 MANAGEMENT_GROUP_BUILTIN_CORP=$(yq '.settings.enterprisescale.additional_builtin_management_groups.corp' $FILE_SETTINGS)
 MANAGEMENT_GROUP_BUILTIN_ONLINE=$(yq '.settings.enterprisescale.additional_builtin_management_groups.online' $FILE_SETTINGS)
 MANAGEMENT_GROUP_BUILTIN_SAP=$(yq '.settings.enterprisescale.additional_builtin_management_groups.sap' $FILE_SETTINGS)
+
+IDENTITY_DEPLOY=$(yq '.settings.enterprisescale.identity.deploy' $FILE_SETTINGS)
+IDENTITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.identity.subscription_id' $FILE_SETTINGS)
+IDENTITY_CUSTOM=$(yq '.settings.enterprisescale.identity.customize' $FILE_SETTINGS)
+
 
 ###########################################
 # Functions
@@ -400,6 +406,91 @@ EOF
 EOF
   rm 1.txt 2.txt
   echo "configure_management_resources = local.configure_management_resources" >> $FILE_MAIN
+fi
+
+###########################################
+# Identity
+###########################################
+
+if [ -n "$IDENTITY_SUBSCRIPTION_ID" ]; then
+  echo "Adding identity provider."
+  cat <<EOF >> $FILE_PROVIDERS
+
+# Azure Provider - Identity
+
+provider "azurerm" {
+  alias           = "identity"
+  subscription_id = "$IDENTITY_SUBSCRIPTION_ID"
+  features {}
+}
+EOF
+
+  echo "Adding identity data source."
+  cat <<EOF >> tmp.txt
+data "azurerm_client_config" "identity" {
+  provider = azurerm.identity
+}
+
+EOF
+
+  cat $FILE_MAIN >> tmp.txt
+  mv tmp.txt $FILE_MAIN
+
+  echo "" >> $FILE_MAIN
+  echo "# Identity" >> $FILE_MAIN
+  echo "Adding subscription_id_identity to main file."
+  echo "subscription_id_identity = data.azurerm_client_config.identity.subscription_id" >> $FILE_MAIN
+else
+  echo "" >> $FILE_MAIN
+  echo "# Identity" >> $FILE_MAIN
+fi
+
+if [ "$IDENTITY_DEPLOY" == true ]; then
+  echo "Adding deploy_identity_resources to variable file."
+  cat <<EOF >> $FILE_VARIABLES
+
+variable "deploy_identity_resources" {
+  type        = bool
+  description = "If set to true, will enable the \"Identity\" landing zone settings."
+  default     = true
+}
+EOF
+else
+  echo "Adding deploy_identity_resources to variable file."
+  cat <<EOF >> $FILE_VARIABLES
+
+variable "deploy_identity_resources" {
+  type        = bool
+  description = "If set to true, will enable the \"Identity\" landing zone settings."
+  default     = false
+}
+EOF
+fi
+
+echo "Adding deploy_identity_resources to main file."
+echo "deploy_identity_resources = var.deploy_identity_resources" >> $FILE_MAIN
+
+if [ "$IDENTITY_CUSTOM" == true ]; then
+  # Create FILE_LOCALS_IDENTITY
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  sed -n '/variable "configure_identity_resources" {/,/^}/p' 1.txt > 2.txt
+  sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
+  sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt
+
+  echo "Adding configure_identity_resources to locals."
+  cat <<EOF > $FILE_LOCALS_IDENTITY
+locals {
+  configure_identity_resources = {
+EOF
+
+  cat 2.txt >> $FILE_LOCALS_IDENTITY
+
+  cat <<EOF >> $FILE_LOCALS_IDENTITY
+  }
+}
+EOF
+  rm 1.txt 2.txt
+  echo "configure_identity_resources = local.configure_identity_resources" >> $FILE_MAIN
 fi
 
 ###########################################

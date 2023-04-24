@@ -128,7 +128,6 @@ mkdir -p ./$DIRECTORY_LAUNCHPAD
 # Launchpad Outputs File
 ###########################################
 
-print_empty_lines 1
 echo "Creating $FILE_OUTPUTS."
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_OUTPUTS
 output "resource_group_name" {
@@ -148,7 +147,6 @@ EOF
 # Launchpad Providers File
 ###########################################
 
-print_empty_lines 1
 echo "Creating $FILE_PROVIDERS."
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_PROVIDERS
 terraform {
@@ -173,7 +171,6 @@ EOF
 # Launchpad Variables File
 ###########################################
 
-print_empty_lines 1
 echo "Creating $FILE_VARIABLES."
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_VARIABLES
 variable "tenant_id" {
@@ -238,7 +235,6 @@ EOF
 # Launchpad Main File
 ###########################################
 
-print_empty_lines 1
 echo "Creating $FILE_MAIN."
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_MAIN
 ###############################################################
