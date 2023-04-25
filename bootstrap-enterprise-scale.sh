@@ -46,6 +46,8 @@ IDENTITY_DEPLOY=$(yq '.settings.enterprisescale.identity.deploy' $FILE_SETTINGS)
 IDENTITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.identity.subscription_id' $FILE_SETTINGS)
 IDENTITY_CUSTOM=$(yq '.settings.enterprisescale.identity.customize' $FILE_SETTINGS)
 
+ES_LATEST_VERSION_TAG=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name")
+ES_LATEST_VERSION=$(echo $ES_LATEST_VERSION_TAG | sed 's/v//g')
 
 ###########################################
 # Functions
@@ -209,8 +211,6 @@ EOF
 # Create initial FILE_MAIN
 ###########################################
 
-ES_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name" | sed 's/v//g')
-
 echo "Adding module configuration to main file."
 
 cat <<EOF > $FILE_MAIN
@@ -218,7 +218,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "$ES_VERSION"
+  version = "$ES_LATEST_VERSION"
 
   providers = {
     azurerm = azurerm
@@ -299,7 +299,7 @@ echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FIL
 
 if [ "$CONNECTIVITY_CUSTOM" == true ]; then
   # Create FILE_LOCALS_CONNECTIVITY
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > 1.txt
   sed -n '/variable "configure_connectivity_resources" {/,/^}/p' 1.txt > 2.txt
   sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
   sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt
@@ -387,7 +387,7 @@ echo "deploy_management_resources = var.deploy_management_resources" >> $FILE_MA
 
 if [ "$MANAGEMENT_CUSTOM" == true ]; then
   # Create FILE_LOCALS_MANAGEMENT
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > 1.txt
   sed -n '/variable "configure_management_resources" {/,/^}/p' 1.txt > 2.txt
   sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
   sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt
@@ -472,7 +472,7 @@ echo "deploy_identity_resources = var.deploy_identity_resources" >> $FILE_MAIN
 
 if [ "$IDENTITY_CUSTOM" == true ]; then
   # Create FILE_LOCALS_IDENTITY
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/main/variables.tf > 1.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > 1.txt
   sed -n '/variable "configure_identity_resources" {/,/^}/p' 1.txt > 2.txt
   sed -n '/  default = {/,/^  }/p' 2.txt > 1.txt
   sed -n '/    settings = {/,/^    }/p' 1.txt > 2.txt

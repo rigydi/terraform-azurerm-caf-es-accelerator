@@ -5,24 +5,44 @@ export TERM=xterm-256color
 ############################
 # Check Inputs
 ############################
+TEMP=$(getopt -o '' --long client_id:,client_secret:,tenant_id:,subscription_id:,action: -- "$@")
+eval set -- "$TEMP"
 
-while getopts 'i:s:a:' flag; do
-  case "${flag}" in
-    i) CLIENT_ID="${OPTARG}" ;;
-    s) CLIENT_SECRET="${OPTARG}" ;;
-    a) ACTION="${OPTARG}" ;;
-    *) echo "Invalid option: -$OPTARG" >&2
-       exit 1 ;;
+while true; do
+  case "$1" in
+    --client_id)
+      ARM_CLIENT_ID="$2"
+      shift 2;;
+    --client_secret)
+      ARM_CLIENT_SECRET="$2"
+      shift 2;;
+    --tenant_id)
+      ARM_TENANT_ID="$2"
+      shift 2;;
+    --subscription_id)
+      ARM_SUBSCRIPTION_ID="$2"
+      shift 2;;
+    --action)
+      ACTION="$2"
+      shift 2;;
+
+    --)
+      shift
+      break;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1;;
   esac
 done
 
-if [[ -z "${CLIENT_ID}" || -z "${CLIENT_SECRET}" || -z "${ACTION}" ]]; then
-  echo "Error: Missing option flag(s). Please run the script with both options: -a <deploy|destroy|fullrun> -i <Service Principal Client ID> -s <Service Principal Client Secret>" >&2
+
+if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" || -z "${ARM_TENANT_ID}" || -z "${ARM_SUBSCRIPTION_ID}" ]]; then
+  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID>" >&2
   exit 1
 fi
 
 if [[ "${ACTION}" != "deploy" && "${ACTION}" != "destroy" && "${ACTION}" != "fullrun" ]]; then
-  echo "Error: Invalid value for -a option. Must be one of: deploy, destroy, fullrun" >&2
+  echo "Error running script. Use --action to specify one of: deploy, destroy, fullrun" >&2
   exit 1
 fi
 
@@ -62,10 +82,10 @@ DIRECTORY_TEST_TARGET_LAUNCHPAD="$DIRECTORY_TEST_TARGET/launchpad"
 TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS_YAML)
 SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS_YAML)
 
-export ARM_CLIENT_ID=$CLIENT_ID
-export ARM_CLIENT_SECRET=$CLIENT_SECRET
-export ARM_SUBSCRIPTION_ID=$SUBSCRIPTION_ID
-export ARM_TENANT_ID=$TENANT_ID
+export ARM_CLIENT_ID=$ARM_CLIENT_ID
+export ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET
+export ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID
+export ARM_TENANT_ID=$ARM_TENANT_ID
 
 ############################
 # Some Functions

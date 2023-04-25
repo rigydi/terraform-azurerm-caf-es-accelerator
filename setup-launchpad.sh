@@ -1,17 +1,35 @@
 #!/usr/bin/env bash
 
-while getopts 'i:s:' flag; do
-  case "${flag}" in
-    i) ARM_CLIENT_ID="${OPTARG}" ;;
-    s) ARM_CLIENT_SECRET="${OPTARG}" ;;
-    *) echo "Invalid option: -$OPTARG" >&2
-       exit 1 ;;
+TEMP=$(getopt -o '' --long client_id:,client_secret:,tenant_id:,subscription_id: -- "$@")
+eval set -- "$TEMP"
+
+while true; do
+  case "$1" in
+    --client_id)
+      ARM_CLIENT_ID="$2"
+      shift 2;;
+    --client_secret)
+      ARM_CLIENT_SECRET="$2"
+      shift 2;;
+    --tenant_id)
+      ARM_TENANT_ID="$2"
+      shift 2;;
+    --subscription_id)
+      ARM_SUBSCRIPTION_ID="$2"
+      shift 2;;
+
+    --)
+      shift
+      break;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1;;
   esac
 done
 
-if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" ]]; then
-  print_empty_lines 1
-  echo "Error: Missing option flag(s). Please run the script with both options: -i <Service Principal Client ID> -s <Service Principal Client Secret>" >&2
+
+if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" || -z "${ARM_TENANT_ID}" || -z "${ARM_SUBSCRIPTION_ID}" ]]; then
+  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID>" >&2
   exit 1
 fi
 
@@ -24,10 +42,8 @@ FILE_MAIN="main.tf"
 
 DIRECTORY_LAUNCHPAD="launchpad"
 
-TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS)
-SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS)
-BASENAME="launchpad" #$(yq '.settings.launchpad.basename' $FILE_SETTINGS)
-RANDOM_LENGTH=5 #$(yq '.settings.launchpad.random_length' $FILE_SETTINGS)
+BASENAME="launchpad"
+RANDOM_LENGTH=5
 LOCATION=$(yq '.settings.launchpad.location' $FILE_SETTINGS)
 ACCOUNT_TIER=$(yq '.settings.launchpad.account_tier' $FILE_SETTINGS)
 ACCOUNT_REPLICATION_TYPE=$(yq '.settings.launchpad.account_replication_type' $FILE_SETTINGS)
@@ -63,18 +79,6 @@ print_empty_lines 1
 ###########################################
 # Verify if Input exists
 ###########################################
-
-if [ -z "$TENANT_ID" ]; then
-  print_empty_lines 1
-  echo "TENANT_ID not specified."
-  exit 1
-fi
-
-if [ -z "$SUBSCRIPTION_ID" ]; then
-  print_empty_lines 1
-  echo "SUBSCRIPTION_ID not specified."
-  exit 1
-fi
 
 if [ -z "$BASENAME" ]; then
   print_empty_lines 1
@@ -161,8 +165,6 @@ terraform {
 }
 
 provider "azurerm" {
-  subscription_id = var.subscription_id
-  tenant_id       = var.tenant_id
   features {}
 }
 EOF
@@ -173,18 +175,6 @@ EOF
 
 echo "Creating $FILE_VARIABLES."
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_VARIABLES
-variable "tenant_id" {
-  description = "The Azure Active Directory Tenant ID."
-  type        = string
-  default     = "$TENANT_ID"
-}
-
-variable "subscription_id" {
-  description = "The ID of the Azure subscription containing the Launchpad resources."
-  type        = string
-  default     = "$SUBSCRIPTION_ID"
-}
-
 variable "basename" {
   description = "The string for naming all Azure resources."
   type        = string
@@ -314,8 +304,8 @@ EOF
 
 export ARM_CLIENT_ID=$ARM_CLIENT_ID
 export ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET
-export ARM_TENANT_ID=$TENANT_ID
-export ARM_SUBSCRIPTION_ID=$SUBSCRIPTION_ID
+export ARM_TENANT_ID=$ARM_TENANT_ID
+export ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID
 
 ###########################################
 # Terraform Init
@@ -376,8 +366,6 @@ CONTAINER_NAME=$(terraform -chdir=$DIRECTORY_LAUNCHPAD output container_name)
 cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_BACKEND
 terraform {
   backend "azurerm" {
-    tenant_id = "$TENANT_ID"
-    subscription_id = "$SUBSCRIPTION_ID"
     resource_group_name = $RESOURCE_GROUP_NAME
     storage_account_name = $STORAGE_ACCOUNT_NAME
     container_name = $CONTAINER_NAME
