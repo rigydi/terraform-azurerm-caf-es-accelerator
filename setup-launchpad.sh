@@ -40,7 +40,7 @@ FILE_OUTPUTS="outputs.tf"
 FILE_PROVIDERS="terraform.tf"
 FILE_MAIN="main.tf"
 
-DIRECTORY_LAUNCHPAD="launchpad"
+DIRECTORY_LAUNCHPAD="01_launchpad"
 
 BASENAME="launchpad"
 RANDOM_LENGTH=5
@@ -345,6 +345,7 @@ fi
 
 print_empty_lines 1
 echo "Executing terraform apply."
+print_empty_lines 1
 if terraform -chdir=$DIRECTORY_LAUNCHPAD apply -auto-approve
 then
   print_empty_lines 1

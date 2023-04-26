@@ -77,7 +77,8 @@ FILE_SETTINGS_YAML="bootstrap.yaml"
 DIRECTORY_ROOT=$(find / -type f -name $FILE_SETUP_ES -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
 DIRECTORY_TEST=$(find / -type f -name $FILE_TEST -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
 DIRECTORY_TEST_TARGET="$DIRECTORY_TEST/tmp_testrun"
-DIRECTORY_TEST_TARGET_LAUNCHPAD="$DIRECTORY_TEST_TARGET/launchpad"
+DIRECTORY_TEST_TARGET_LAUNCHPAD="$DIRECTORY_TEST_TARGET/01_launchpad"
+DIRECTORY_TEST_TARGET_ENTERPRISE_SCALE="$DIRECTORY_TEST_TARGET/02_enterprisescale"
 
 TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS_YAML)
 SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS_YAML)
@@ -132,7 +133,8 @@ then
 
   echo "Launchpad: Starting installation."
   cd $DIRECTORY_TEST_TARGET
-  if ./$FILE_SETUP_LAUNCHPAD -i $CLIENT_ID -s $CLIENT_SECRET
+  print_empty_lines 1
+  if ./$FILE_SETUP_LAUNCHPAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID 
   then
     echo "Launchpad: Azure resources successfully deployed."
   else
@@ -167,7 +169,7 @@ then
 
   echo -n "TF-CAF-ES: Initializing Terraform."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET init
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_ENTERPRISE_SCALE init
   then
     print_empty_lines 1
     echo "TF-CAF-ES: Initializing Terraform was successful."
@@ -179,7 +181,7 @@ then
 
   echo -n "TF-CAF-ES: Creating Azure resouces."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET apply -auto-approve
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_ENTERPRISE_SCALE apply -auto-approve
   then
     print_empty_lines 1
     echo "TF-CAF-ES: Terraform apply executed successfully."
@@ -199,7 +201,7 @@ then
   print_empty_lines 1
   echo -n "TF-CAF-ES: Destroying Terraform resources."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET destroy -auto-approve
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_ENTERPRISE_SCALE destroy -auto-approve
   then
     print_empty_lines 1
     echo "TF-CAF-ES: Terraform destroy executed successfully."
@@ -227,7 +229,7 @@ then
 
   echo "Launchpad: Initialize Terraform before destroying."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD/ init -migrate-state
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD init -migrate-state
   then
     print_empty_lines 1
     echo "Launchpad: Successfully initialized Terraform."
