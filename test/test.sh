@@ -37,12 +37,12 @@ done
 
 
 if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" || -z "${ARM_TENANT_ID}" || -z "${ARM_SUBSCRIPTION_ID}" ]]; then
-  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID>" >&2
+  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID> --action <deploy|destroy|cycle>" >&2
   exit 1
 fi
 
-if [[ "${ACTION}" != "deploy" && "${ACTION}" != "destroy" && "${ACTION}" != "fullrun" ]]; then
-  echo "Error running script. Use --action to specify one of: deploy, destroy, fullrun" >&2
+if [[ "${ACTION}" != "deploy" && "${ACTION}" != "destroy" && "${ACTION}" != "cycle" ]]; then
+  echo "Error running script. Use --action to specify one of: deploy, destroy, cycle. Cycle means deploy&destroy" >&2
   exit 1
 fi
 
@@ -69,7 +69,7 @@ trap 'handle_error' ERR
 # Variables
 ############################
 
-FILE_SETUP_LAUNCHPAD="setup-launchpad.sh"
+FILE_SETUP_BRIDGEHEAD="setup-bridgehead.sh"
 FILE_SETUP_ES="bootstrap-enterprise-scale.sh"
 FILE_TEST="test.sh"
 FILE_SETTINGS_YAML="bootstrap.yaml"
@@ -77,11 +77,8 @@ FILE_SETTINGS_YAML="bootstrap.yaml"
 DIRECTORY_ROOT=$(find / -type f -name $FILE_SETUP_ES -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
 DIRECTORY_TEST=$(find / -type f -name $FILE_TEST -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
 DIRECTORY_TEST_TARGET="$DIRECTORY_TEST/tmp_testrun"
-DIRECTORY_TEST_TARGET_LAUNCHPAD="$DIRECTORY_TEST_TARGET/01_launchpad"
+DIRECTORY_TEST_TARGET_BRIDGEHEAD="$DIRECTORY_TEST_TARGET/01_bridgehead"
 DIRECTORY_TEST_TARGET_ENTERPRISE_SCALE="$DIRECTORY_TEST_TARGET/02_enterprisescale"
-
-TENANT_ID=$(yq '.settings.launchpad.tenant_id' $FILE_SETTINGS_YAML)
-SUBSCRIPTION_ID=$(yq '.settings.launchpad.subscription_id' $FILE_SETTINGS_YAML)
 
 export ARM_CLIENT_ID=$ARM_CLIENT_ID
 export ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET
@@ -111,7 +108,7 @@ function cleanup {
 # Prepare Testrun folder and Files
 ############################
 
-if [[ "$ACTION" == "deploy" || "$ACTION" == "fullrun" ]]
+if [[ "$ACTION" == "deploy" || "$ACTION" == "cycle" ]]
 then
   cleanup
   echo "Preparations: Creating directory $DIRECTORY_TEST_TARGET."
@@ -122,23 +119,23 @@ then
 fi
 
 ############################
-# Launchpad - Installation
+# Bridgehead - Installation
 ############################
 
-if [[ "$ACTION" == "deploy" || "$ACTION" == "fullrun" ]]
+if [[ "$ACTION" == "deploy" || "$ACTION" == "cycle" ]]
 then
   print_empty_lines 1
-  echo "Launchpad: Copying $FILE_SETUP_LAUNCHPAD to $DIRECTORY_TEST_TARGET."
-  cp -a $DIRECTORY_ROOT/$FILE_SETUP_LAUNCHPAD $DIRECTORY_TEST_TARGET
+  echo "Bridgehead: Copying $FILE_SETUP_BRIDGEHEAD to $DIRECTORY_TEST_TARGET."
+  cp -a $DIRECTORY_ROOT/$FILE_SETUP_BRIDGEHEAD $DIRECTORY_TEST_TARGET
 
-  echo "Launchpad: Starting installation."
+  echo "Bridgehead: Starting installation."
   cd $DIRECTORY_TEST_TARGET
   print_empty_lines 1
-  if ./$FILE_SETUP_LAUNCHPAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID 
+  if ./$FILE_SETUP_BRIDGEHEAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID 
   then
-    echo "Launchpad: Azure resources successfully deployed."
+    echo "Bridgehead: Azure resources successfully deployed."
   else
-    echo "Launchpad: Azure resource installation failed."
+    echo "Bridgehead: Azure resource installation failed."
     exit 1
   fi
 fi
@@ -147,7 +144,7 @@ fi
 # TF-CAF-ES - Installation
 ############################
 
-if [[ "$ACTION" == "deploy" || "$ACTION" == "fullrun" ]]
+if [[ "$ACTION" == "deploy" || "$ACTION" == "cycle" ]]
 then
   print_empty_lines 1
   echo "TF-CAF-ES: Copying $FILE_SETUP_ES to $DIRECTORY_TEST_TARGET."
@@ -196,7 +193,7 @@ fi
 # TF-CAF-ES Destruction
 ############################
 
-if [[ "$ACTION" == "destroy" || "$ACTION" == "fullrun" ]]
+if [[ "$ACTION" == "destroy" || "$ACTION" == "cycle" ]]
 then
   print_empty_lines 1
   echo -n "TF-CAF-ES: Destroying Terraform resources."
@@ -213,43 +210,43 @@ then
 fi
 
 ############################
-# Launchpad Destruction
+# Bridgehead Destruction
 ############################
 
-if [[ "$ACTION" == "destroy" || "$ACTION" == "fullrun" ]]
+if [[ "$ACTION" == "destroy" || "$ACTION" == "cycle" ]]
 then
-  echo "Launchpad: Removing lifecycle restriction from resources."
-  sed -i '/lifecycle/d' $DIRECTORY_TEST_TARGET_LAUNCHPAD/main.tf
+  echo "Bridgehead: Removing lifecycle restriction from resources."
+  sed -i '/lifecycle/d' $DIRECTORY_TEST_TARGET_BRIDGEHEAD/main.tf
 
-  echo "Launchpad: Pull state to local file."
-  terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD state pull > $DIRECTORY_TEST_TARGET_LAUNCHPAD/terraform.tfstate
+  echo "Bridgehead: Pull state to local file."
+  terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD state pull > $DIRECTORY_TEST_TARGET_BRIDGEHEAD/terraform.tfstate
 
-  echo "Launchpad: Remove backend definition."
-  rm $DIRECTORY_TEST_TARGET_LAUNCHPAD/backend.tf
+  echo "Bridgehead: Remove backend definition."
+  rm $DIRECTORY_TEST_TARGET_BRIDGEHEAD/backend.tf
 
-  echo "Launchpad: Initialize Terraform before destroying."
+  echo "Bridgehead: Initialize Terraform before destroying."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD init -migrate-state
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init -migrate-state
   then
     print_empty_lines 1
-    echo "Launchpad: Successfully initialized Terraform."
+    echo "Bridgehead: Successfully initialized Terraform."
   else
     print_empty_lines 1
-    echo "Launchpad: Terraform initializiation failed."
+    echo "Bridgehead: Terraform initializiation failed."
     exit 1
   fi
 
-  echo "Launchpad: Run terraform destroy."
+  echo "Bridgehead: Run terraform destroy."
   print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_LAUNCHPAD destroy -auto-approve
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD destroy -auto-approve
   then
     print_empty_lines 1
-    echo "Launchpad: Resources successfully destroyed."
+    echo "Bridgehead: Resources successfully destroyed."
     print_empty_lines 3
     echo "Testrun was successfull."
   else
     print_empty_lines 1
-    echo "Launchpad: Resource destruction failed."
+    echo "Bridgehead: Resource destruction failed."
     exit 1
   fi
 fi

@@ -1,4 +1,0 @@
-deploy_identity_resources = var.deploy_identity_resources
-deploy_identity_resources = var.deploy_identity_resources
-deploy_identity_resources = var.deploy_identity_resources
-deploy_identity_resources = var.deploy_identity_resources

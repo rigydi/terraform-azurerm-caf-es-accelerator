@@ -9,7 +9,7 @@ FILE_MAIN="main.tf"
 FILE_VARIABLES="variables.tf"
 FILE_TFVARS="terraform.tfvars"
 FILE_SETTINGS="bootstrap.yaml"
-FILE_BACKEND_LAUNCHPAD="backend.tf"
+FILE_BACKEND_BRIDGEHEAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
 FILE_LOCALS_IDENTITY="settings.identity.tf"
@@ -21,7 +21,7 @@ yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 
 FOLDER_ENTERPRISE_SCALE="02_enterprisescale"
 FOLDER_BACKUP="backup"
-FOLDER_LAUNCHPAD="01_launchpad"
+FOLDER_BRIDGEHEAD="01_bridgehead"
 FOLDER_LIBRARY="lib"
 FOLDER_POLICY_ASSIGNMENTS="$FOLDER_LIBRARY/policy_assignments"
 
@@ -29,7 +29,7 @@ BACKEND_STATE_FILENAME="terraform-enterprise-scale.tfstate"
 
 ROOT_ID=$(yq '.settings.enterprisescale.core.root_id' $FILE_SETTINGS)
 ROOT_NAME=$(yq '.settings.enterprisescale.core.root_name' $FILE_SETTINGS)
-DEFAULT_LOCATION=$(yq '.settings.launchpad.location' $FILE_SETTINGS)
+DEFAULT_LOCATION=$(yq '.settings.bridgehead.location' $FILE_SETTINGS)
 
 CONNECTIVITY_DEPLOY=$(yq '.settings.enterprisescale.connectivity.deploy' $FILE_SETTINGS)
 CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.connectivity.subscription_id' $FILE_SETTINGS)
@@ -134,15 +134,15 @@ fi
 ###########################################
 
 
-if [ -f "./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD" ]
+if [ -f "./$FOLDER_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD" ]
 then
   echo "Adding backend definition."
   echo "# Azure Backend Configuration for Terraform State File Management" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
   echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-  cat ./$FOLDER_LAUNCHPAD/$FILE_BACKEND_LAUNCHPAD >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  cat ./$FOLDER_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
   sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
 else
-  echo "No backend definition found in $FOLDER_LAUNCHPAD."
+  echo "No backend definition found in $FOLDER_BRIDGEHEAD."
   echo "Attention! Creating empty backend definition in $FILE_PROVIDERS. Make sure to declare the backend in file $FILE_PROVIDERS."
 
 cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
@@ -571,7 +571,7 @@ for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[
 
   # Check if id is not null
   if [[ "$id" != null ]]; then
-    if [[ "$id" == *"launchpad"* ]]; then
+    if [[ "$id" == *"bridgehead"* ]]; then
       custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
       custom_landing_zones+="    display_name = \"$display_name\"\n"
       custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}\"\n"
@@ -788,7 +788,7 @@ echo -e '\e[1;32m# ATTENTION! Before manually executing Terraform, e.g. terrafor
 echo -e '\e[1;32m# export ARM_TENANT_ID="..." # The AAD tenant of your automation user.\e[0m'
 echo -e '\e[1;32m# export ARM_CLIENT_ID="..." # The Client ID of your automation user.'
 echo -e '\e[1;32m# export ARM_CLIENT_SECRET="..." # The Client Secret of your automation user.\e[0m'
-echo -e '\e[1;32m# export ARM_SUBSCRIPTION_ID="..." # The Launchpad subscription ID.\e[0m'
+echo -e '\e[1;32m# export ARM_SUBSCRIPTION_ID="..." # The Bridgehead subscription ID.\e[0m'
 echo -e '\e[1;32m# Terraform will use these values for authenticating to Azure, when reading the backend storage.\e[0m'
 echo -e '\e[1;32m##############################################\e[0m'
 print_empty_lines 3

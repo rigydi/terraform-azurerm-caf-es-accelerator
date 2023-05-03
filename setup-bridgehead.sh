@@ -40,13 +40,13 @@ FILE_OUTPUTS="outputs.tf"
 FILE_PROVIDERS="terraform.tf"
 FILE_MAIN="main.tf"
 
-DIRECTORY_LAUNCHPAD="01_launchpad"
+DIRECTORY_BRIDGEHEAD="01_bridgehead"
 
-BASENAME="launchpad"
+BASENAME="bridgehead"
 RANDOM_LENGTH=5
-LOCATION=$(yq '.settings.launchpad.location' $FILE_SETTINGS)
-ACCOUNT_TIER=$(yq '.settings.launchpad.account_tier' $FILE_SETTINGS)
-ACCOUNT_REPLICATION_TYPE=$(yq '.settings.launchpad.account_replication_type' $FILE_SETTINGS)
+LOCATION=$(yq '.settings.bridgehead.location' $FILE_SETTINGS)
+ACCOUNT_TIER=$(yq '.settings.bridgehead.account_tier' $FILE_SETTINGS)
+ACCOUNT_REPLICATION_TYPE=$(yq '.settings.bridgehead.account_replication_type' $FILE_SETTINGS)
 
 ###########################################
 # Functions
@@ -123,23 +123,23 @@ if [ -z "$ARM_CLIENT_SECRET" ]; then
 fi
 
 ###########################################
-# Launchpad Directory
+# Bridgehead Directory
 ###########################################
 
-mkdir -p ./$DIRECTORY_LAUNCHPAD
+mkdir -p ./$DIRECTORY_BRIDGEHEAD
 
 ###########################################
-# Launchpad Outputs File
+# Bridgehead Outputs File
 ###########################################
 
 echo "Creating $FILE_OUTPUTS."
-cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_OUTPUTS
+cat <<EOF > $DIRECTORY_BRIDGEHEAD/$FILE_OUTPUTS
 output "resource_group_name" {
-  value = azurerm_resource_group.launchpad.name
+  value = azurerm_resource_group.bridgehead.name
 }
 
 output "storage_account_name" {
-  value = azurerm_storage_account.launchpad.name
+  value = azurerm_storage_account.bridgehead.name
 }
 
 output "container_name" {
@@ -148,11 +148,11 @@ output "container_name" {
 EOF
 
 ###########################################
-# Launchpad Providers File
+# Bridgehead Providers File
 ###########################################
 
 echo "Creating $FILE_PROVIDERS."
-cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_PROVIDERS
+cat <<EOF > $DIRECTORY_BRIDGEHEAD/$FILE_PROVIDERS
 terraform {
   required_version = "~> 1.3"
   required_providers {
@@ -170,11 +170,11 @@ provider "azurerm" {
 EOF
 
 ###########################################
-# Launchpad Variables File
+# Bridgehead Variables File
 ###########################################
 
 echo "Creating $FILE_VARIABLES."
-cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_VARIABLES
+cat <<EOF > $DIRECTORY_BRIDGEHEAD/$FILE_VARIABLES
 variable "basename" {
   description = "The string for naming all Azure resources."
   type        = string
@@ -222,24 +222,24 @@ variable "account_replication_type" {
 EOF
 
 ###########################################
-# Launchpad Main File
+# Bridgehead Main File
 ###########################################
 
 echo "Creating $FILE_MAIN."
-cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_MAIN
+cat <<EOF > $DIRECTORY_BRIDGEHEAD/$FILE_MAIN
 ###############################################################
 # Local Variables
 ###############################################################
 
 locals {
   tags = {
-    environment = "terraform launchpad"
+    environment = "terraform bridgehead"
     managedby   = "terraform"
   }
 }
 
 ##################################
-# Resource Group for Launchpad
+# Resource Group for BRIDGEHEAD
 ##################################
 
 # https://registry.terraform.io/providers/aztfmod/azurecaf/latest
@@ -250,7 +250,7 @@ resource "azurecaf_name" "rg" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group
-resource "azurerm_resource_group" "launchpad" {
+resource "azurerm_resource_group" "bridgehead" {
   name     = azurecaf_name.rg.result
   location = var.location
   tags     = local.tags
@@ -268,17 +268,17 @@ resource "azurecaf_name" "stracc" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account
-resource "azurerm_storage_account" "launchpad" {
+resource "azurerm_storage_account" "bridgehead" {
   name                     = azurecaf_name.stracc.result
-  resource_group_name      = azurerm_resource_group.launchpad.name
-  location                 = azurerm_resource_group.launchpad.location
+  resource_group_name      = azurerm_resource_group.bridgehead.name
+  location                 = azurerm_resource_group.bridgehead.location
   account_tier             = var.account_tier
   account_replication_type = var.account_replication_type
   tags                     = local.tags
 }
 
 ##################################
-# Blob Container for Launchpad and Terraform CAF Enterprise Scale (tfcafes) state file
+# Blob Container for Bridgehead and Terraform CAF Enterprise Scale (tfcafes) state file
 ##################################
 
 # https://registry.terraform.io/providers/aztfmod/azurecaf/latest
@@ -291,7 +291,7 @@ resource "azurecaf_name" "tfcafes" {
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_container
 resource "azurerm_storage_container" "tfcafes" {
   name                  = azurecaf_name.tfcafes.result
-  storage_account_name  = azurerm_storage_account.launchpad.name
+  storage_account_name  = azurerm_storage_account.bridgehead.name
   container_access_type = "private"
 
   lifecycle { prevent_destroy = true }
@@ -313,7 +313,7 @@ export ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID
 
 print_empty_lines 1
 echo "Executing terraform init."
-if terraform -chdir=$DIRECTORY_LAUNCHPAD init
+if terraform -chdir=$DIRECTORY_BRIDGEHEAD init
 then
   print_empty_lines 1
   echo -e "\e[1;32m"Terraform init executed successfully."\e[0m"
@@ -329,7 +329,7 @@ fi
 
 print_empty_lines 1
 echo "Executing terraform validate."
-if terraform -chdir=$DIRECTORY_LAUNCHPAD validate
+if terraform -chdir=$DIRECTORY_BRIDGEHEAD validate
 then
   print_empty_lines 1
   echo -e "\e[1;32m"Terraform validate executed successfully."\e[0m"
@@ -346,7 +346,7 @@ fi
 print_empty_lines 1
 echo "Executing terraform apply."
 print_empty_lines 1
-if terraform -chdir=$DIRECTORY_LAUNCHPAD apply -auto-approve
+if terraform -chdir=$DIRECTORY_BRIDGEHEAD apply -auto-approve
 then
   print_empty_lines 1
   echo -e "\e[1;32m"Terraform apply executed successfully."\e[0m"
@@ -360,27 +360,27 @@ fi
 # Configure Azure backend
 ####################################
 
-RESOURCE_GROUP_NAME=$(terraform -chdir=$DIRECTORY_LAUNCHPAD output resource_group_name)
-STORAGE_ACCOUNT_NAME=$(terraform -chdir=$DIRECTORY_LAUNCHPAD output storage_account_name)
-CONTAINER_NAME=$(terraform -chdir=$DIRECTORY_LAUNCHPAD output container_name)
+RESOURCE_GROUP_NAME=$(terraform -chdir=$DIRECTORY_BRIDGEHEAD output resource_group_name)
+STORAGE_ACCOUNT_NAME=$(terraform -chdir=$DIRECTORY_BRIDGEHEAD output storage_account_name)
+CONTAINER_NAME=$(terraform -chdir=$DIRECTORY_BRIDGEHEAD output container_name)
 
-cat <<EOF > $DIRECTORY_LAUNCHPAD/$FILE_BACKEND
+cat <<EOF > $DIRECTORY_BRIDGEHEAD/$FILE_BACKEND
 terraform {
   backend "azurerm" {
     resource_group_name = $RESOURCE_GROUP_NAME
     storage_account_name = $STORAGE_ACCOUNT_NAME
     container_name = $CONTAINER_NAME
-    key = "terraform-launchpad.tfstate"
+    key = "terraform-bridgehead.tfstate"
   }
 }
 EOF
 
-if terraform -chdir=$DIRECTORY_LAUNCHPAD init <<EOF
+if terraform -chdir=$DIRECTORY_BRIDGEHEAD init <<EOF
 yes
 EOF
 then
   print_empty_lines 1
-  echo -e "\e[1;32m"Launchpad successfully installed."\e[0m"
+  echo -e "\e[1;32m"Bridgehead successfully installed."\e[0m"
 else
   echo -e "\e[1;31m"Initializing Azure Backend failed."\e[0m"
   exit 1
@@ -392,8 +392,8 @@ fi
 
 print_empty_lines 2
 echo "Post Steps: Formatting all Terraform files."
-terraform -chdir=$DIRECTORY_LAUNCHPAD fmt >/dev/null 2>&1
+terraform -chdir=$DIRECTORY_BRIDGEHEAD fmt >/dev/null 2>&1
 
 echo "Post Steps: Removing local state file."
 print_empty_lines 2
-rm -f $DIRECTORY_LAUNCHPAD/terraform.tfstate* >/dev/null 2>&1
+rm -f $DIRECTORY_BRIDGEHEAD/terraform.tfstate* >/dev/null 2>&1

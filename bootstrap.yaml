@@ -1,5 +1,5 @@
 settings:
-  launchpad:
+  bridgehead:
     tenant_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
     subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
     location: "e.g. westeurope"
@@ -26,10 +26,10 @@ settings:
       online: true/false
       sap: true/false
     custom_management_groups:
-      launchpad:
+      bridgehead:
         parent_management_group_id: "root"
-        id: "launchpad"
-        display_name: "Launchpad"
+        id: "bridgehead"
+        display_name: "Bridgehead"
         subscription_ids: ["e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"]
     policies:
       replace_this_string_with_policy_name:
@@ -41,10 +41,10 @@ settings:
 ########################################################
 
 ##################
-# launchpad
+# Bridgehead
 ##################
 # tenant_id: (Required) The ID (string) of the Azure Active Directory Tenant.
-# subscription_id: (Required) The ID (string) of the Azure subscription in which the launchpad resources will be deployed.
+# subscription_id: (Required) The ID (string) of the Azure subscription in which the Bridgehead resources will be deployed.
 # location: (Required) Defines the region (string) in which the resources will be deployed, e.g. westeurope.
 # account_tier: (Required) Defines the tier (string) for this storage account. Valid options are Standard and Premium. For BlockBlobStorage and FileStorage accounts only Premium is valid. Changing this forces a new resource to be created.
 # account_replication_type: (Required) Defines the type of replication to use for this storage account. Valid options are LRS, GRS, RAGRS, ZRS, GZRS and RAGZRS.
@@ -94,7 +94,7 @@ settings:
 # custom management groups (Optional)
 #
 # Add additional management groups if required by repeating the same block with different values. The name of the block is arbitrary. Just make sure the names are different from each other (e.g. mygroup1, mygroup2 etc.).
-# ATTENTION: The launchpad management group is predefined. Do not delete.
+# ATTENTION: The bridgehead management group is predefined. Do not delete.
 ########### 
 # parent_management_group_id: (Required) The ID (string) of the parent management group. The IDs can be extracted here: https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/tree/main/modules/archetypes/lib/archetype_definitions. It is the last string component of the filename, e.g. connectivity, corp, decommissioned, identity, landing_zones, management, online, platform etc. These are the standard Enterprise Scale management groups.
 # id: (Required) The name (string) of the management group used as an identifier, e.g. own-management-group-1

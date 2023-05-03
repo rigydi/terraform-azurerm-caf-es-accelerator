@@ -19,7 +19,7 @@ jobs:
       ########################################################
       terraform_version: latest
       tfvars_filename: terraform.tfvars
-      working_directory: 02_enterprisescale
+      working_directory: 01_bridgehead
     secrets:
       ########################################################
       # Terraform Azure Provider Authentication
@@ -46,7 +46,7 @@ jobs:
       ########################################################
       terraform_version: latest
       tfvars_filename: terraform.tfvars
-      working_directory: 02_enterprisescale
+      working_directory: 01_bridgehead
       ########################################################
       # Github
       ########################################################
@@ -77,7 +77,7 @@ jobs:
       ########################################################
       terraform_version: latest
       tfvars_filename: terraform-dev.tfvars
-      working_directory: 02_enterprisescale
+      working_directory: 01_bridgehead
     secrets:
       ########################################################
       # Terraform Azure Provider Authentication
@@ -104,7 +104,7 @@ jobs:
       ########################################################
       terraform_version: latest
       tfvars_filename: terraform-prod.tfvars
-      working_directory: 02_enterprisescale
+      working_directory: 01_bridgehead
       ########################################################
       # Github
       ########################################################
