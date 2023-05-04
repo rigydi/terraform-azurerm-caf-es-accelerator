@@ -14,4 +14,4 @@ Execute the script:
 ./test.sh -a <deploy|destroy|fullrun> -i <Service Principal Application/Client ID> -s <Service Principal Application/Client Secret>
 ```
 
-If you chose **-a fullrun** It will perform a complete testrun, i.e. creating and destroying the Azure Launchpad and Enterprise Scale resources.
+If you chose **-a fullrun** It will perform a complete testrun, i.e. creating and destroying the Azure Bridgehead and Enterprise Scale resources.

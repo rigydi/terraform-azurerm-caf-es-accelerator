@@ -1,0 +1,120 @@
+name: "Bridgehead"
+on:
+  workflow_dispatch:
+
+jobs:
+  plan_dev:
+    uses: rigydi/f10ws/.github/workflows/terraform_plan.yaml
+    with:
+      ########################################################
+      # Terraform AZURERM Backend
+      # https://developer.hashicorp.com/terraform/language/settings/backends/azurerm
+      ########################################################
+      backend_resource_group_name:
+      backend_storage_account_name:
+      backend_container_name:
+      backend_statefile_name:
+      ########################################################
+      # Terraform
+      ########################################################
+      terraform_version: latest
+      tfvars_filename: terraform.tfvars
+      working_directory: 01_bridgehead
+    secrets:
+      ########################################################
+      # Terraform Azure Provider Authentication
+      # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#configuring-the-service-principal-in-terraform
+      ########################################################
+      arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
+      arm_backend_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
+      arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
+  
+  deploy_dev:
+    uses: rigydi/f10ws/.github/workflows/terraform_deploy.yaml
+    with:
+      ########################################################
+      # Terraform AZURERM Backend
+      # https://developer.hashicorp.com/terraform/language/settings/backends/azurerm
+      ########################################################
+      backend_resource_group_name:
+      backend_storage_account_name:
+      backend_container_name:
+      backend_statefile_name:
+      ########################################################
+      # Terraform
+      ########################################################
+      terraform_version: latest
+      tfvars_filename: terraform.tfvars
+      working_directory: 01_bridgehead
+      ########################################################
+      # Github
+      ########################################################
+      github_environment:
+    secrets:
+      ########################################################
+      # Terraform Azure Provider Authentication
+      # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#configuring-the-service-principal-in-terraform
+      ########################################################
+      arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
+      arm_backend_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
+      arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
+
+  plan_prod:
+    uses: rigydi/f10ws/.github/workflows/terraform_plan.yaml
+    with:
+      ########################################################
+      # Terraform AZURERM Backend
+      # https://developer.hashicorp.com/terraform/language/settings/backends/azurerm
+      ########################################################
+      backend_resource_group_name:
+      backend_storage_account_name:
+      backend_container_name:
+      backend_statefile_name:
+      ########################################################
+      # Terraform
+      ########################################################
+      terraform_version: latest
+      tfvars_filename: terraform-dev.tfvars
+      working_directory: 01_bridgehead
+    secrets:
+      ########################################################
+      # Terraform Azure Provider Authentication
+      # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#configuring-the-service-principal-in-terraform
+      ########################################################
+      arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
+      arm_backend_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
+      arm_client_id: ${{ secrets.ARM_CLIENT_ID }}
+  
+  deploy_prod:
+    uses: rigydi/f10ws/.github/workflows/terraform_deploy.yaml
+    with:
+      ########################################################
+      # Terraform AZURERM Backend
+      # https://developer.hashicorp.com/terraform/language/settings/backends/azurerm
+      ########################################################
+      backend_resource_group_name:
+      backend_storage_account_name:
+      backend_container_name:
+      backend_statefile_name:
+      ########################################################
+      # Terraform
+      ########################################################
+      terraform_version: latest
+      tfvars_filename: terraform-prod.tfvars
+      working_directory: 01_bridgehead
+      ########################################################
+      # Github
+      ########################################################
+      github_environment:
+    secrets:
+      ########################################################
+      # Terraform Azure Provider Authentication
+      # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret#configuring-the-service-principal-in-terraform
+      ########################################################
+      arm_tenant_id: ${{ secrets.ARM_TENANT_ID }}
+      arm_backend_subscription_id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      arm_client_secret: ${{ secrets.ARM_CLIENT_SECRET }}
+      arm_client_id: ${{ secrets.ARM_CLIENT_ID }} 

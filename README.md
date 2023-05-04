@@ -1,7 +1,7 @@
 # Terraform-Azure-Enterprise-Scale-Accelerator
 
 This repository standardizes and automates:
-1) the deployment of an Azure backend storage for Terraform state file management (Launchpad)
+1) the deployment of an Azure backend storage for Terraform state file management (Bridgehead)
 2) a bootstrapping procedure for creating Terraform configuration files required by [terraform-azurerm-caf-enterprise-scale](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale)
 
 </br>
@@ -10,8 +10,8 @@ This repository standardizes and automates:
 
 You:
 1) fill out **bootstrap.yaml**
-2) execute **setup-launchpad.sh**
-3) execute **bootstrap-enterprise-scale.sh** and **Terraform** to deploy Enterprise Scale resources
+2) execute **01_setup_bridgehead.sh**
+3) execute **02_bootstrap_enterprise_scale.sh** and **Terraform** to deploy Enterprise Scale resources
 
 Please read the next chapters for detailed instructions.
 
@@ -37,12 +37,12 @@ Please read the next chapters for detailed instructions.
 
 </br>
 
-# Setup Launchpad
+# Setup Bridgehead
 
 </br>
 
-**5) Launchpad Azure Subscription**
-- Create an Azure [subscription](https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/create-subscription) on which the Launchpad resources will be deployed.
+**5) Bridgehead Azure Subscription**
+- Create an Azure [subscription](https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/create-subscription) on which the Bridgehead resources will be deployed.
 
 **6) Azure Automation User**
 - Create an [Azure Service Principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal) which will be used as an automation user to authenticate to Azure.
@@ -52,11 +52,14 @@ Please read the next chapters for detailed instructions.
 **7) Installation**
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
-> ./**setup-launchpad.sh** -i 'Service Principal Application/Client ID>' -s 'Service Principal Secret'
+> ./**01_setup_bridgehead.sh** --client_id 'Service Principal Application/Client ID' --client_secret 'Service Principal Secret' --tenant_id 'Azure Active Directory Tenant ID' --subscription_id 'Subscription ID for Terraform Azure Backend'
 
 
-**8) Azure Resources**
-- Inspect the [main.tf](https://github.com/rigydi/terraform-azurerm-launchpad/blob/main/main.tf) file to see which resources will be deployed.
+**8) Azure Resources für Backend**
+- The following Azure resource will be deployed as part of the Bridgehead:
+  - Resource Group
+  - Storage Account
+  - Blob Container
 
 **9) Terraform State File**
 - In the last step of the installation procedure, the installation script will configure the [Azure Backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm) to host the [Terraform state file](https://developer.hashicorp.com/terraform/language/state).
@@ -71,7 +74,7 @@ Please read the next chapters for detailed instructions.
 
 **11) Bootstrap Terraform Enterprise Scale**
 - Start the script by executing
-> ./**bootstrap-enterprise-scale.sh**
+> ./**02_bootstrap_enterprise_scale.sh**
 
 **12) Execute**
 - The script creates the required Terraform Enterprise Scale files according to your inputs. Adjust the Terraform files if required.
