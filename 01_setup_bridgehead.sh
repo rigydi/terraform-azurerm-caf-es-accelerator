@@ -42,7 +42,7 @@ FILE_MAIN="main.tf"
 
 DIRECTORY_BRIDGEHEAD="01_bridgehead"
 
-BASENAME="bridgehead"
+BASENAME="azure-bridgehead"
 RANDOM_LENGTH=5
 LOCATION=$(yq '.settings.bridgehead.location' $FILE_SETTINGS)
 ACCOUNT_TIER=$(yq '.settings.bridgehead.account_tier' $FILE_SETTINGS)
@@ -246,7 +246,7 @@ locals {
 resource "azurecaf_name" "rg" {
   name          = var.basename
   resource_type = "azurerm_resource_group"
-  random_length = var.random_length
+  random_length = 0
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group
@@ -283,9 +283,9 @@ resource "azurerm_storage_account" "bridgehead" {
 
 # https://registry.terraform.io/providers/aztfmod/azurecaf/latest
 resource "azurecaf_name" "tfcafes" {
-  name          = "terraform-caf-es"
+  name          = "terraform-backend-enterprise-scale"
   resource_type = "azurerm_storage_blob"
-  random_length = var.random_length
+  random_length = 0
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_container

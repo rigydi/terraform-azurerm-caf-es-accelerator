@@ -1,7 +1,5 @@
 settings:
   bridgehead:
-    tenant_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
-    subscription_id: "e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"
     location: "e.g. westeurope"
     account_tier: "e.g. Standard"
     account_replication_type: "e.g. LRS"
@@ -32,10 +30,18 @@ settings:
         display_name: "Bridgehead"
         subscription_ids: ["e.g. XXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX-XXXXXXXXXXX"]
     policies:
-      replace_this_string_with_policy_name:
+      Azure_Security_Benchmark:
         assign: true/false
         management_group_id: ""
-
+      CIS:
+        assign: true/false
+        management_group_id: ""
+      ISO_27001_2013:
+        assign: true/false
+        management_group_id: ""
+      NIST_SP_800_53_Rev_5:
+        assign: true/false
+        management_group_id: ""
 ########################################################
 # Documentation
 ########################################################
@@ -43,8 +49,6 @@ settings:
 ##################
 # Bridgehead
 ##################
-# tenant_id: (Required) The ID (string) of the Azure Active Directory Tenant.
-# subscription_id: (Required) The ID (string) of the Azure subscription in which the Bridgehead resources will be deployed.
 # location: (Required) Defines the region (string) in which the resources will be deployed, e.g. westeurope.
 # account_tier: (Required) Defines the tier (string) for this storage account. Valid options are Standard and Premium. For BlockBlobStorage and FileStorage accounts only Premium is valid. Changing this forces a new resource to be created.
 # account_replication_type: (Required) Defines the type of replication to use for this storage account. Valid options are LRS, GRS, RAGRS, ZRS, GZRS and RAGZRS.

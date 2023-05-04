@@ -10,8 +10,8 @@ This repository standardizes and automates:
 
 You:
 1) fill out **bootstrap.yaml**
-2) execute **setup-bridgehead.sh**
-3) execute **bootstrap-enterprise-scale.sh** and **Terraform** to deploy Enterprise Scale resources
+2) execute **01_setup_bridgehead.sh**
+3) execute **02_bootstrap_enterprise_scale.sh** and **Terraform** to deploy Enterprise Scale resources
 
 Please read the next chapters for detailed instructions.
 
@@ -52,7 +52,7 @@ Please read the next chapters for detailed instructions.
 **7) Installation**
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
-> ./**setup-bridgehead.sh** -i 'Service Principal Application/Client ID>' -s 'Service Principal Secret'
+> ./**01_setup_bridgehead.sh** --client_id 'Service Principal Application/Client ID' --client_secret 'Service Principal Secret' --tenant_id 'Azure Active Directory Tenant ID' --subscription_id 'Subscription ID for Terraform Azure Backend'
 
 
 **8) Azure Resources für Backend**
@@ -74,7 +74,7 @@ Please read the next chapters for detailed instructions.
 
 **11) Bootstrap Terraform Enterprise Scale**
 - Start the script by executing
-> ./**bootstrap-enterprise-scale.sh**
+> ./**02_bootstrap_enterprise_scale.sh**
 
 **12) Execute**
 - The script creates the required Terraform Enterprise Scale files according to your inputs. Adjust the Terraform files if required.

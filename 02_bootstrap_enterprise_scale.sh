@@ -473,7 +473,7 @@ EOF
 fi
 
 echo "Adding deploy_identity_resources to main file."
-echo "deploy_identity_resources = var.deploy_identity_resources" >> $FILE_MAIN
+echo "deploy_identity_resources = var.deploy_identity_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
 
 if [ "$IDENTITY_CUSTOM" == true ]; then
   # Create FILE_LOCALS_IDENTITY

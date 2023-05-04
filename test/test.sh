@@ -69,8 +69,8 @@ trap 'handle_error' ERR
 # Variables
 ############################
 
-FILE_SETUP_BRIDGEHEAD="setup-bridgehead.sh"
-FILE_SETUP_ES="bootstrap-enterprise-scale.sh"
+FILE_SETUP_BRIDGEHEAD="01_setup_bridgehead.sh"
+FILE_SETUP_ES="02_bootstrap_enterprise_scale.sh"
 FILE_TEST="test.sh"
 FILE_SETTINGS_YAML="bootstrap.yaml"
 
@@ -130,7 +130,6 @@ then
 
   echo "Bridgehead: Starting installation."
   cd $DIRECTORY_TEST_TARGET
-  print_empty_lines 1
   if ./$FILE_SETUP_BRIDGEHEAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID 
   then
     echo "Bridgehead: Azure resources successfully deployed."
@@ -224,9 +223,21 @@ then
   echo "Bridgehead: Remove backend definition."
   rm $DIRECTORY_TEST_TARGET_BRIDGEHEAD/backend.tf
 
-  echo "Bridgehead: Initialize Terraform before destroying."
+  echo "Bridgehead: Migrate state before destroying resources."
   print_empty_lines 1
   if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init -migrate-state
+  then
+    print_empty_lines 1
+    echo "Bridgehead: Successfully migrated Terraform state."
+  else
+    print_empty_lines 1
+    echo "Bridgehead: Terraform state migration failed."
+    exit 1
+  fi
+
+  echo "Bridgehead: Initializing Terraform before destroying resources."
+  print_empty_lines 1
+  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init
   then
     print_empty_lines 1
     echo "Bridgehead: Successfully initialized Terraform."
@@ -244,6 +255,7 @@ then
     echo "Bridgehead: Resources successfully destroyed."
     print_empty_lines 3
     echo "Testrun was successfull."
+    print_empty_lines 1
   else
     print_empty_lines 1
     echo "Bridgehead: Resource destruction failed."
