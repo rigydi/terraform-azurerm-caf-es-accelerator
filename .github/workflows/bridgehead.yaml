@@ -18,7 +18,7 @@ jobs:
       # Terraform
       ########################################################
       terraform_version: latest
-      tfvars_filename: terraform.tfvars
+      tfvars_filename: terraform-dev.tfvars
       working_directory: 01_bridgehead
     secrets:
       ########################################################
@@ -45,7 +45,7 @@ jobs:
       # Terraform
       ########################################################
       terraform_version: latest
-      tfvars_filename: terraform.tfvars
+      tfvars_filename: terraform-dev.tfvars
       working_directory: 01_bridgehead
       ########################################################
       # Github
@@ -76,7 +76,7 @@ jobs:
       # Terraform
       ########################################################
       terraform_version: latest
-      tfvars_filename: terraform-dev.tfvars
+      tfvars_filename: terraform-prod.tfvars
       working_directory: 01_bridgehead
     secrets:
       ########################################################
