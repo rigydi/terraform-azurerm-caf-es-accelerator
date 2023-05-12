@@ -5,7 +5,7 @@ export TERM=xterm-256color
 ############################
 # Check Inputs
 ############################
-TEMP=$(getopt -o '' --long client_id:,client_secret:,tenant_id:,subscription_id:,action: -- "$@")
+TEMP=$(getopt -o '' --long client_id:,client_secret:,tenant_id:,subscription_id:,environment:,action: -- "$@")
 eval set -- "$TEMP"
 
 while true; do
@@ -22,6 +22,9 @@ while true; do
     --subscription_id)
       ARM_SUBSCRIPTION_ID="$2"
       shift 2;;
+    --environment)
+      ENVIRONMENT="$2"
+      shift 2;;
     --action)
       ACTION="$2"
       shift 2;;
@@ -36,8 +39,8 @@ while true; do
 done
 
 
-if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" || -z "${ARM_TENANT_ID}" || -z "${ARM_SUBSCRIPTION_ID}" ]]; then
-  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID> --action <deploy|destroy|cycle>" >&2
+if [[ -z "${ARM_CLIENT_ID}" || -z "${ARM_CLIENT_SECRET}" || -z "${ARM_TENANT_ID}" || -z "${ARM_SUBSCRIPTION_ID}" || -z "${ENVIRONMENT}" ]]; then
+  echo "Error running shell script. Following input is required: --client_id <Service Principal Client ID> --client_secret <Service Principal Client Secret> --tenant_id <AAD Tenant ID --subscription_id <Azure Subscription ID> --environment <e.g. dev, stage, prod> --action <deploy|destroy|cycle>" >&2
   exit 1
 fi
 
@@ -73,6 +76,7 @@ FILE_SETUP_BRIDGEHEAD="01_setup_bridgehead.sh"
 FILE_SETUP_ES="02_bootstrap_enterprise_scale.sh"
 FILE_TEST="test.sh"
 FILE_SETTINGS_YAML="bootstrap.yaml"
+FILE_TFVARS="terraform-$ENVIRONMENT.tfvars"
 
 DIRECTORY_ROOT=$(find / -type f -name $FILE_SETUP_ES -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
 DIRECTORY_TEST=$(find / -type f -name $FILE_TEST -printf "%h\n" 2>/dev/null | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- | head -n 1)
@@ -125,12 +129,12 @@ fi
 if [[ "$ACTION" == "deploy" || "$ACTION" == "cycle" ]]
 then
   print_empty_lines 1
-  echo "Bridgehead: Copying $FILE_SETUP_BRIDGEHEAD to $DIRECTORY_TEST_TARGET."
+  echo "Bridgehead: Copying $FILE_SETUP_BRIDGEHEAD from $DIRECTORY_ROOT to $DIRECTORY_TEST_TARGET."
   cp -a $DIRECTORY_ROOT/$FILE_SETUP_BRIDGEHEAD $DIRECTORY_TEST_TARGET
 
   echo "Bridgehead: Starting installation."
   cd $DIRECTORY_TEST_TARGET
-  if ./$FILE_SETUP_BRIDGEHEAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID 
+  if ./$FILE_SETUP_BRIDGEHEAD --client_id $ARM_CLIENT_ID --client_secret $ARM_CLIENT_SECRET --tenant_id $ARM_TENANT_ID --subscription_id $ARM_SUBSCRIPTION_ID --environment $ENVIRONMENT
   then
     echo "Bridgehead: Azure resources successfully deployed."
   else
@@ -214,44 +218,61 @@ fi
 
 if [[ "$ACTION" == "destroy" || "$ACTION" == "cycle" ]]
 then
-  echo "Bridgehead: Removing lifecycle restriction from resources."
-  sed -i '/lifecycle/d' $DIRECTORY_TEST_TARGET_BRIDGEHEAD/main.tf
+  # echo "Bridgehead: Removing lifecycle restriction from resources."
+  # sed -i '/lifecycle/d' $DIRECTORY_TEST_TARGET_BRIDGEHEAD/main.tf
 
-  echo "Bridgehead: Pull state to local file."
-  terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD state pull > $DIRECTORY_TEST_TARGET_BRIDGEHEAD/terraform.tfstate
+  # echo "Bridgehead: Pull state to local file."
+  # terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD state pull > $DIRECTORY_TEST_TARGET_BRIDGEHEAD/terraform.tfstate
 
-  echo "Bridgehead: Remove backend definition."
-  rm $DIRECTORY_TEST_TARGET_BRIDGEHEAD/backend.tf
+  # echo "Bridgehead: Remove backend definition."
+  # rm $DIRECTORY_TEST_TARGET_BRIDGEHEAD/backend.tf
 
-  echo "Bridgehead: Migrate state before destroying resources."
-  print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init -migrate-state
+  # echo "Bridgehead: Migrate state before destroying resources."
+  # print_empty_lines 1
+  # if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init -migrate-state
+  # then
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Successfully migrated Terraform state."
+  # else
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Terraform state migration failed."
+  #   exit 1
+  # fi
+
+  # echo "Bridgehead: Initializing Terraform before destroying resources."
+  # print_empty_lines 1
+  # if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init
+  # then
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Successfully initialized Terraform."
+  # else
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Terraform initializiation failed."
+  #   exit 1
+  # fi
+
+  # echo "Bridgehead: Run terraform destroy."
+  # print_empty_lines 1
+  # if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD destroy -auto-approve --var-file=$FILE_TFVARS
+  # then
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Resources successfully destroyed."
+  #   print_empty_lines 3
+  #   echo "Testrun was successfull."
+  #   print_empty_lines 1
+  # else
+  #   print_empty_lines 1
+  #   echo "Bridgehead: Resource destruction failed."
+  #   exit 1
+  # fi
+
+  RESOURCE_GROUP_NAME=$(terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD output resource_group_name)
+  RESOURCE_GROUP_NAME=$(awk '{gsub(/"/,"",$0); print $0}' <<<"$RESOURCE_GROUP_NAME")
+  az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET --tenant $ARM_TENANT_ID >/dev/null 2>&1
+
+  echo "Bridgehead: Destroying all resources."
+  if az group delete --yes -n $RESOURCE_GROUP_NAME >/dev/null 2>&1
   then
-    print_empty_lines 1
-    echo "Bridgehead: Successfully migrated Terraform state."
-  else
-    print_empty_lines 1
-    echo "Bridgehead: Terraform state migration failed."
-    exit 1
-  fi
-
-  echo "Bridgehead: Initializing Terraform before destroying resources."
-  print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD init
-  then
-    print_empty_lines 1
-    echo "Bridgehead: Successfully initialized Terraform."
-  else
-    print_empty_lines 1
-    echo "Bridgehead: Terraform initializiation failed."
-    exit 1
-  fi
-
-  echo "Bridgehead: Run terraform destroy."
-  print_empty_lines 1
-  if terraform -chdir=$DIRECTORY_TEST_TARGET_BRIDGEHEAD destroy -auto-approve
-  then
-    print_empty_lines 1
     echo "Bridgehead: Resources successfully destroyed."
     print_empty_lines 3
     echo "Testrun was successfull."
@@ -260,5 +281,5 @@ then
     print_empty_lines 1
     echo "Bridgehead: Resource destruction failed."
     exit 1
-  fi
+  fi 
 fi
