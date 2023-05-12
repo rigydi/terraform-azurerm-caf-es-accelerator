@@ -13,17 +13,18 @@ FILE_BACKEND_BRIDGEHEAD="backend.tf"
 FILE_LOCALS_CONNECTIVITY="settings.connectivity.tf"
 FILE_LOCALS_MANAGEMENT="settings.management.tf"
 FILE_LOCALS_IDENTITY="settings.identity.tf"
+FILE_SECRETS="secrets.tf"
 
 # Read the yaml file and convert it to JSON
 YAML_FILE=$FILE_SETTINGS
 JSON_FILE="bootstrap.json"
 yq eval -o=json "$YAML_FILE" > "$JSON_FILE"
 
-FOLDER_ENTERPRISE_SCALE="02_enterprisescale"
-FOLDER_BACKUP="backup"
-FOLDER_BRIDGEHEAD="01_bridgehead"
-FOLDER_LIBRARY="lib"
-FOLDER_POLICY_ASSIGNMENTS="$FOLDER_LIBRARY/policy_assignments"
+DIRECTORY_ENTERPRISE_SCALE="02_enterprisescale"
+DIRECTORY_BACKUP="backup"
+DIRECTORY_BRIDGEHEAD="01_bridgehead"
+DIRECTORY_LIBRARY="lib"
+DIRECTORY_POLICY_ASSIGNMENTS="$DIRECTORY_LIBRARY/policy_assignments"
 
 BACKEND_STATE_FILENAME="terraform-enterprise-scale.tfstate"
 
@@ -34,10 +35,12 @@ DEFAULT_LOCATION=$(yq '.settings.bridgehead.location' $FILE_SETTINGS)
 CONNECTIVITY_DEPLOY=$(yq '.settings.enterprisescale.connectivity.deploy' $FILE_SETTINGS)
 CONNECTIVITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.connectivity.subscription_id' $FILE_SETTINGS)
 CONNECTIVITY_CUSTOM=$(yq '.settings.enterprisescale.connectivity.customize' $FILE_SETTINGS)
+CONNECTIVITY_DATASOURCE_NAME="$(grep name $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | cut -d'"' -f2 | grep -i connectivity)"
 
 MANAGEMENT_DEPLOY=$(yq '.settings.enterprisescale.management.deploy' $FILE_SETTINGS)
 MANAGEMENT_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.management.subscription_id' $FILE_SETTINGS)
 MANAGEMENT_CUSTOM=$(yq '.settings.enterprisescale.management.customize' $FILE_SETTINGS)
+MANAGEMENT_DATASOURCE_NAME="$(grep name $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | cut -d'"' -f2 | grep -i management)"
 
 MANAGEMENT_GROUP_BUILTIN_CORP=$(yq '.settings.enterprisescale.additional_builtin_management_groups.corp' $FILE_SETTINGS)
 MANAGEMENT_GROUP_BUILTIN_ONLINE=$(yq '.settings.enterprisescale.additional_builtin_management_groups.online' $FILE_SETTINGS)
@@ -46,13 +49,20 @@ MANAGEMENT_GROUP_BUILTIN_SAP=$(yq '.settings.enterprisescale.additional_builtin_
 IDENTITY_DEPLOY=$(yq '.settings.enterprisescale.identity.deploy' $FILE_SETTINGS)
 IDENTITY_SUBSCRIPTION_ID=$(yq '.settings.enterprisescale.identity.subscription_id' $FILE_SETTINGS)
 IDENTITY_CUSTOM=$(yq '.settings.enterprisescale.identity.customize' $FILE_SETTINGS)
+IDENTITY_DATASOURCE_NAME="$(grep name $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | cut -d'"' -f2 | grep -i identity)"
 
 ES_LATEST_VERSION_TAG=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/Azure/terraform-azurerm-caf-enterprise-scale/releases/latest | jq -r ".tag_name")
 ES_LATEST_VERSION=$(echo $ES_LATEST_VERSION_TAG | sed 's/v//g')
 
+ES_LATEST_VERSION="3.3.0"
+ES_LATEST_VERSION_TAG="v3.3.0"
+
 DATE=$(date '+%Y%m%d%H%M%S')
 
-mkdir -p $FOLDER_ENTERPRISE_SCALE
+KEY_VAULT_NAME=$(terraform -chdir=$DIRECTORY_BRIDGEHEAD output key_vault_name)
+RESOURCE_GROUP_NAME=$(terraform -chdir=$DIRECTORY_BRIDGEHEAD output resource_group_name)
+
+mkdir -p $DIRECTORY_ENTERPRISE_SCALE
 
 ###########################################
 # Functions
@@ -68,18 +78,18 @@ function print_empty_lines() {
 
 # clean up files
 cleanup () {
-  rm -rf $FOLDER_ENTERPRISE_SCALE/* > /dev/null 2>&1
+  rm -rf $DIRECTORY_ENTERPRISE_SCALE/* > /dev/null 2>&1
 }
 
 function backup () {
-  array_backup=($FOLDER_ENTERPRISE_SCALE)
-  mkdir -p ./$FOLDER_BACKUP/$DATE > /dev/null 2>&1
+  array_backup=($DIRECTORY_ENTERPRISE_SCALE)
+  mkdir -p ./$DIRECTORY_BACKUP/$DATE > /dev/null 2>&1
   for element in "${array_backup[@]}"
   do
     if [[ -e $element ]]
     then
       echo "Backing up: $element"
-      cp -a "$element" ./$FOLDER_BACKUP/$DATE/ > /dev/null 2>&1
+      cp -a "$element" ./$DIRECTORY_BACKUP/$DATE/ > /dev/null 2>&1
     else
       echo "$element is not existing. No backup necessary."
     fi
@@ -88,7 +98,7 @@ function backup () {
 
 function handle_interrupt () {
   print_empty_lines 2
-  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  echo "Backing up files to folder ./$DIRECTORY_BACKUP."
   backup
   echo "Cleaning up files."
   cleanup
@@ -99,7 +109,7 @@ function handle_interrupt () {
 function handle_error () {
   print_empty_lines 2
   echo "An error occurred."
-  echo "Backing up files to folder ./$FOLDER_BACKUP."
+  echo "Backing up files to folder ./$DIRECTORY_BACKUP."
   backup
   echo "Cleaning up files."
   cleanup
@@ -134,24 +144,22 @@ fi
 ###########################################
 
 
-if [ -f "./$FOLDER_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD" ]
+if [ -f "./$DIRECTORY_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD" ]
 then
   echo "Adding backend definition."
-  echo "# Azure Backend Configuration for Terraform State File Management" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-  cat ./$FOLDER_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-  sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  echo "# Azure Backend Configuration for Terraform State File Management" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  cat ./$DIRECTORY_BRIDGEHEAD/$FILE_BACKEND_BRIDGEHEAD >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  sed -i "s/\(key\s*=\s*\)[^ ]*/\1\"${BACKEND_STATE_FILENAME}\"/" $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 else
-  echo "No backend definition found in $FOLDER_BRIDGEHEAD."
+  echo "No backend definition found in $DIRECTORY_BRIDGEHEAD."
   echo "Attention! Creating empty backend definition in $FILE_PROVIDERS. Make sure to declare the backend in file $FILE_PROVIDERS."
 
-cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 # Terraform State File Backend Configuration"
 
 terraform {
 backend "azurerm" {
-  tenant_id = ""
-  subscription_id = ""
   resource_group_name = ""
   storage_account_name = ""
   container_name = ""
@@ -164,9 +172,9 @@ fi
 AZURERM_LATEST_VERSION=$(curl -s -L -H "Accept: application/vnd.github+json" https://api.github.com/repos/hashicorp/terraform-provider-azurerm/releases/latest | jq -r ".tag_name" | sed 's/v//g')
 
 echo "Adding provider restrictions."
-echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-echo "# Provider Versions and Restrictions" >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
-cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+echo "# Provider Versions and Restrictions" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 
 terraform {
   required_providers {
@@ -191,7 +199,7 @@ EOF
 
 echo "Adding core variables to variables file."
 
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 variable "root_id" {
   description = "If specified, will set a custom Name (ID) value for the Enterprise-scale \"root\" Management Group, and append this to the ID for all core Enterprise-scale Management Groups."
   type        = string
@@ -218,7 +226,12 @@ EOF
 
 echo "Adding module configuration to main file."
 
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+data "azurerm_key_vault" "this" {
+  name                = $KEY_VAULT_NAME
+  resource_group_name = $RESOURCE_GROUP_NAME
+}
+
 data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
@@ -244,42 +257,47 @@ EOF
 
 if [ -n "$CONNECTIVITY_SUBSCRIPTION_ID" ]; then
   echo "Adding connectivity provider."
-  sed -i 's/azurerm.connectivity = azurerm/azurerm.connectivity = azurerm.connectivity/' $FOLDER_ENTERPRISE_SCALE/main.tf
+  sed -i 's/azurerm.connectivity = azurerm/azurerm.connectivity = azurerm.connectivity/' $DIRECTORY_ENTERPRISE_SCALE/main.tf
 
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 
 # Azure Provider - Connectivity
 
+data "azurerm_key_vault_secret" "$CONNECTIVITY_DATASOURCE_NAME" {
+  name         = "$CONNECTIVITY_DATASOURCE_NAME"
+  key_vault_id = data.azurerm_key_vault.this.id
+}
+
 provider "azurerm" {
   alias           = "connectivity"
-  subscription_id = "$CONNECTIVITY_SUBSCRIPTION_ID"
+  subscription_id = data.azurerm_key_vault_secret.$CONNECTIVITY_DATASOURCE_NAME.value
   features {}
 }
 EOF
 
   echo "Adding connectivity data source."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
 data "azurerm_client_config" "connectivity" {
   provider = azurerm.connectivity
 }
 
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
-  mv $FOLDER_ENTERPRISE_SCALE/tmp.txt $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  cat $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
+  mv $DIRECTORY_ENTERPRISE_SCALE/tmp.txt $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
     
   echo "Adding subscription_id_connectivity to main file."
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Connectivity" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Connectivity" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "subscription_id_connectivity = data.azurerm_client_config.connectivity.subscription_id" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 else
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Connectivity" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Connectivity" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 if [ "$CONNECTIVITY_DEPLOY" == true ]; then
   echo "Adding deploy_connectivity_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_connectivity_resources" {
   type        = bool
@@ -289,7 +307,7 @@ variable "deploy_connectivity_resources" {
 EOF
 else
   echo "Adding deploy_connectivity_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_connectivity_resources" {
   type        = bool
@@ -300,29 +318,29 @@ EOF
 fi
 
 echo "Adding deploy_connectivity_resources to main file."
-echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "deploy_connectivity_resources = var.deploy_connectivity_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 if [ "$CONNECTIVITY_CUSTOM" == true ]; then
   # Create FILE_LOCALS_CONNECTIVITY
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/variable "configure_connectivity_resources" {/,/^}/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
-  sed -n '/  default = {/,/^  }/p' $FOLDER_ENTERPRISE_SCALE/2.txt > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/    settings = {/,/^    }/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/variable "configure_connectivity_resources" {/,/^}/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  sed -n '/  default = {/,/^  }/p' $DIRECTORY_ENTERPRISE_SCALE/2.txt > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/    settings = {/,/^    }/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
   
   echo "Adding configure_connectivity_resources to locals."
-  cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
+  cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
 locals {
   configure_connectivity_resources = {
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/2.txt >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
+  cat $DIRECTORY_ENTERPRISE_SCALE/2.txt >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
 
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_CONNECTIVITY
   }
 }
 EOF
-  rm $FOLDER_ENTERPRISE_SCALE/1.txt $FOLDER_ENTERPRISE_SCALE/2.txt
-  echo "configure_connectivity_resources = local.configure_connectivity_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  rm $DIRECTORY_ENTERPRISE_SCALE/1.txt $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  echo "configure_connectivity_resources = local.configure_connectivity_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 
@@ -332,42 +350,47 @@ fi
 
 if [ -n "$MANAGEMENT_SUBSCRIPTION_ID" ]; then
   echo "Adding management provider."
-  sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' $FOLDER_ENTERPRISE_SCALE/main.tf
+  sed -i 's/azurerm.management = azurerm/azurerm.management = azurerm.management/' $DIRECTORY_ENTERPRISE_SCALE/main.tf
 
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 
 # Azure Provider - Management
 
+data "azurerm_key_vault_secret" "$MANAGEMENT_DATASOURCE_NAME" {
+  name         = "$MANAGEMENT_DATASOURCE_NAME"
+  key_vault_id = data.azurerm_key_vault.this.id
+}
+
 provider "azurerm" {
   alias           = "management"
-  subscription_id = "$MANAGEMENT_SUBSCRIPTION_ID"
+  subscription_id = data.azurerm_key_vault_secret.$MANAGEMENT_DATASOURCE_NAME.value
   features {}
 }
 EOF
 
   echo "Adding management data source."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
 data "azurerm_client_config" "management" {
   provider = azurerm.management
 }
 
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
-  mv $FOLDER_ENTERPRISE_SCALE/tmp.txt $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  cat $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
+  mv $DIRECTORY_ENTERPRISE_SCALE/tmp.txt $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Management" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Management" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
   echo "Adding subscription_id_management to main file."
-  echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "subscription_id_management = data.azurerm_client_config.management.subscription_id" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 else
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Management" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Management" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 if [ "$MANAGEMENT_DEPLOY" == true ]; then
   echo "Adding deploy_management_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_management_resources" {
   type        = bool
@@ -377,7 +400,7 @@ variable "deploy_management_resources" {
 EOF
 else
   echo "Adding deploy_management_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_management_resources" {
   type        = bool
@@ -388,29 +411,29 @@ EOF
 fi
 
 echo "Adding deploy_management_resources to main file."
-echo "deploy_management_resources = var.deploy_management_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "deploy_management_resources = var.deploy_management_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 if [ "$MANAGEMENT_CUSTOM" == true ]; then
   # Create FILE_LOCALS_MANAGEMENT
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/variable "configure_management_resources" {/,/^}/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
-  sed -n '/  default = {/,/^  }/p' $FOLDER_ENTERPRISE_SCALE/2.txt > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/    settings = {/,/^    }/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/variable "configure_management_resources" {/,/^}/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  sed -n '/  default = {/,/^  }/p' $DIRECTORY_ENTERPRISE_SCALE/2.txt > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/    settings = {/,/^    }/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
 
   echo "Adding configure_management_resources to locals."
-  cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
+  cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
 locals {
   configure_management_resources = {
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/2.txt >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
+  cat $DIRECTORY_ENTERPRISE_SCALE/2.txt >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
 
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_MANAGEMENT
   }
 }
 EOF
-  rm $FOLDER_ENTERPRISE_SCALE/1.txt $FOLDER_ENTERPRISE_SCALE/2.txt
-  echo "configure_management_resources = local.configure_management_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  rm $DIRECTORY_ENTERPRISE_SCALE/1.txt $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  echo "configure_management_resources = local.configure_management_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 ###########################################
@@ -419,40 +442,45 @@ fi
 
 if [ -n "$IDENTITY_SUBSCRIPTION_ID" ]; then
   echo "Adding identity provider."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_PROVIDERS
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
 
 # Azure Provider - Identity
 
+data "azurerm_key_vault_secret" "$IDENTITY_DATASOURCE_NAME" {
+  name         = "$IDENTITY_DATASOURCE_NAME"
+  key_vault_id = data.azurerm_key_vault.this.id
+}
+
 provider "azurerm" {
   alias           = "identity"
-  subscription_id = "$IDENTITY_SUBSCRIPTION_ID"
+  subscription_id = data.azurerm_key_vault_secret.$IDENTITY_DATASOURCE_NAME.value
   features {}
 }
 EOF
 
   echo "Adding identity data source."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
 data "azurerm_client_config" "identity" {
   provider = azurerm.identity
 }
 
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN >> $FOLDER_ENTERPRISE_SCALE/tmp.txt
-  mv $FOLDER_ENTERPRISE_SCALE/tmp.txt $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  cat $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN >> $DIRECTORY_ENTERPRISE_SCALE/tmp.txt
+  mv $DIRECTORY_ENTERPRISE_SCALE/tmp.txt $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Identity" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Identity" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
   echo "Adding subscription_id_identity to main file."
-  echo "subscription_id_identity = data.azurerm_client_config.identity.subscription_id" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "subscription_id_identity = data.azurerm_client_config.identity.subscription_id" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 else
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Identity" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Identity" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 if [ "$IDENTITY_DEPLOY" == true ]; then
   echo "Adding deploy_identity_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_identity_resources" {
   type        = bool
@@ -462,7 +490,7 @@ variable "deploy_identity_resources" {
 EOF
 else
   echo "Adding deploy_identity_resources to variable file."
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_identity_resources" {
   type        = bool
@@ -473,29 +501,29 @@ EOF
 fi
 
 echo "Adding deploy_identity_resources to main file."
-echo "deploy_identity_resources = var.deploy_identity_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "deploy_identity_resources = var.deploy_identity_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 if [ "$IDENTITY_CUSTOM" == true ]; then
   # Create FILE_LOCALS_IDENTITY
-  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/variable "configure_identity_resources" {/,/^}/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
-  sed -n '/  default = {/,/^  }/p' $FOLDER_ENTERPRISE_SCALE/2.txt > $FOLDER_ENTERPRISE_SCALE/1.txt
-  sed -n '/    settings = {/,/^    }/p' $FOLDER_ENTERPRISE_SCALE/1.txt > $FOLDER_ENTERPRISE_SCALE/2.txt
+  curl -s https://raw.githubusercontent.com/Azure/terraform-azurerm-caf-enterprise-scale/$ES_LATEST_VERSION_TAG/variables.tf > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/variable "configure_identity_resources" {/,/^}/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  sed -n '/  default = {/,/^  }/p' $DIRECTORY_ENTERPRISE_SCALE/2.txt > $DIRECTORY_ENTERPRISE_SCALE/1.txt
+  sed -n '/    settings = {/,/^    }/p' $DIRECTORY_ENTERPRISE_SCALE/1.txt > $DIRECTORY_ENTERPRISE_SCALE/2.txt
 
   echo "Adding configure_identity_resources to locals."
-  cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
+  cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
 locals {
   configure_identity_resources = {
 EOF
 
-  cat $FOLDER_ENTERPRISE_SCALE/2.txt >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
+  cat $DIRECTORY_ENTERPRISE_SCALE/2.txt >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
 
-  cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_LOCALS_IDENTITY
   }
 }
 EOF
-  rm $FOLDER_ENTERPRISE_SCALE/1.txt $FOLDER_ENTERPRISE_SCALE/2.txt
-  echo "configure_identity_resources = local.configure_identity_resources" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  rm $DIRECTORY_ENTERPRISE_SCALE/1.txt $DIRECTORY_ENTERPRISE_SCALE/2.txt
+  echo "configure_identity_resources = local.configure_identity_resources" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 ###########################################
@@ -504,16 +532,16 @@ fi
 
 if [[ "$MANAGEMENT_GROUP_BUILTIN_CORP" == "true" || "$MANAGEMENT_GROUP_BUILTIN_ONLINE" == "true" || "$MANAGEMENT_GROUP_BUILTIN_SAP" == "true" ]]
 then
-  echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-  echo "# Additional Built-In Management Groups" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "# Additional Built-In Management Groups" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 fi
 
 if [ "$MANAGEMENT_GROUP_BUILTIN_CORP" == "true" ]
 then
   echo "Adding CORP Management Group to main file."
-  echo "deploy_corp_landing_zones = var.deploy_corp_landing_zones" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "deploy_corp_landing_zones = var.deploy_corp_landing_zones" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
-cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_corp_landing_zones" {
   type        = bool
@@ -526,9 +554,9 @@ fi
 if [ "$MANAGEMENT_GROUP_BUILTIN_ONLINE" == "true" ]
 then
   echo "Adding ONLINE Management Group to main file."
-  echo "deploy_online_landing_zones = var.deploy_online_landing_zones" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "deploy_online_landing_zones = var.deploy_online_landing_zones" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
-cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_online_landing_zones" {
   type        = bool
@@ -541,9 +569,9 @@ fi
 if [ "$MANAGEMENT_GROUP_BUILTIN_SAP" == "true" ]
 then
   echo "Adding SAP Management Group to main file."
-  echo "deploy_sap_landing_zones = var.deploy_sap_landing_zones" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+  echo "deploy_sap_landing_zones = var.deploy_sap_landing_zones" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
-cat <<EOF >> $FOLDER_ENTERPRISE_SCALE/$FILE_VARIABLES
+cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_VARIABLES
 
 variable "deploy_sap_landing_zones" {
   type        = bool
@@ -557,16 +585,31 @@ fi
 # Custom Management Groups
 ###########################################
 
-echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 # Loop through the custom management groups and map the values to the fields
-echo "# Custom Management Groups" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "# Custom Management Groups" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 custom_landing_zones="custom_landing_zones = {\n"
 for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[]' "$JSON_FILE"); do
   id=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.id" "$JSON_FILE")
   display_name=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.display_name" "$JSON_FILE")
   parent_id=$(jq -r ".settings.enterprisescale.custom_management_groups.$group.parent_management_group_id" "$JSON_FILE")
-  subscription_ids=$(jq -c ".settings.enterprisescale.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+  #subscription_ids=$(jq -c ".settings.enterprisescale.custom_management_groups.$group.subscription_ids" "$JSON_FILE")
+  subscription_ids_datasource=("[ "$(cat $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | grep -i name | grep -i $id | awk '{print "data.azurerm_key_vault_secret."$3".value"}' | tr -d '"' | tr '\n' ',' | sed 's/,$/\n]/'))
+  subscription_ids=($(cat $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | grep -i name | grep -i $id | awk '{print $3}' | tr -d '"' | tr '\n' ' '))
+  #subscription_ids=($(cat $DIRECTORY_BRIDGEHEAD/$FILE_SECRETS | grep -i name | grep -i $id | awk '{print $3}' | tr '\n' ' '))
+  
+  echo "Adding additional subscription_ids as data source secrets."
+  for subscription_id in ${subscription_ids[@]}; do
+  cat <<EOF >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_PROVIDERS
+
+data "azurerm_key_vault_secret" "$subscription_id" {
+  name         = "$subscription_id"
+  key_vault_id = data.azurerm_key_vault.this.id
+}
+EOF
+  done
+
   echo "Adding custom management group to main file."
 
   # Check if id is not null
@@ -575,7 +618,7 @@ for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[
       custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
       custom_landing_zones+="    display_name = \"$display_name\"\n"
       custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}\"\n"
-      custom_landing_zones+="    subscription_ids = $subscription_ids\n"
+      custom_landing_zones+="    subscription_ids = ${subscription_ids_datasource[@]}\n"
       custom_landing_zones+="    archetype_config = {\n"
       custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
       custom_landing_zones+="      parameters     = {}\n"
@@ -586,7 +629,7 @@ for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[
       custom_landing_zones+="  \"\${var.root_id}-$id\" = {\n"
       custom_landing_zones+="    display_name = \"\${upper(var.root_id)} $display_name\"\n"
       custom_landing_zones+="    parent_management_group_id = \"\${var.root_id}-$parent_id\"\n"
-      custom_landing_zones+="    subscription_ids = $subscription_ids\n"
+      custom_landing_zones+="    subscription_ids = ${subscription_ids_datasource[@]}\n"
       custom_landing_zones+="    archetype_config = {\n"
       custom_landing_zones+="      archetype_id   = \"default_empty\"\n"
       custom_landing_zones+="      parameters     = {}\n"
@@ -598,15 +641,15 @@ for group in $(jq -r '.settings.enterprisescale.custom_management_groups | keys[
 done
 custom_landing_zones+="}"
 
-echo -e "$custom_landing_zones" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo -e "$custom_landing_zones" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 ###########################################
 # Policies
 ###########################################
 
-echo "" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-echo "library_path = \"\${path.root}/lib\"" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
-mkdir -p $FOLDER_ENTERPRISE_SCALE/$FOLDER_POLICY_ASSIGNMENTS
+echo "" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+echo "library_path = \"\${path.root}/lib\"" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
+mkdir -p $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_POLICY_ASSIGNMENTS
 
 # Read the JSON file and extract the policies and management_group_id
 policies=$(jq -r '.settings.enterprisescale.policies | keys[]' $JSON_FILE)
@@ -638,7 +681,7 @@ while read -r mgmt_group_id; do
       }')
 
     # Write the JSON content to the file
-    echo "$json_content" > $FOLDER_ENTERPRISE_SCALE/$FOLDER_LIBRARY/"$file_name"
+    echo "$json_content" > $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_LIBRARY/"$file_name"
   fi
 done <<< "$mgmt_group_ids" | sort -u
 
@@ -648,7 +691,7 @@ done <<< "$mgmt_group_ids" | sort -u
 ######################
 # Azure Security Benchmark
 ######################
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FOLDER_POLICY_ASSIGNMENTS/policy_assignment_azure_security_benchmark.json
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_POLICY_ASSIGNMENTS/policy_assignment_azure_security_benchmark.json
 {
     "name": "Azure_Security_Benchmark",
     "type": "Microsoft.Authorization/policyAssignments",
@@ -678,7 +721,7 @@ EOF
 ######################
 # CIS_Microsoft_Azure_Foundations_Benchmark_v1.4.0
 ######################
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FOLDER_POLICY_ASSIGNMENTS/policy_assignment_cis.json
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_POLICY_ASSIGNMENTS/policy_assignment_cis.json
 {
     "name": "CIS",
     "type": "Microsoft.Authorization/policyAssignments",
@@ -708,7 +751,7 @@ EOF
 ######################
 # ISO_27001_2013
 ######################
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FOLDER_POLICY_ASSIGNMENTS/policy_assignment_iso_27001_2013.json
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_POLICY_ASSIGNMENTS/policy_assignment_iso_27001_2013.json
 {
     "name": "ISO_27001_2013",
     "type": "Microsoft.Authorization/policyAssignments",
@@ -738,7 +781,7 @@ EOF
 ######################
 # ISO_27001_2013
 ######################
-cat <<EOF > $FOLDER_ENTERPRISE_SCALE/$FOLDER_POLICY_ASSIGNMENTS/policy_assignment_nist.json
+cat <<EOF > $DIRECTORY_ENTERPRISE_SCALE/$DIRECTORY_POLICY_ASSIGNMENTS/policy_assignment_nist.json
 {
     "name": "NIST_SP_800_53_Rev_5",
     "type": "Microsoft.Authorization/policyAssignments",
@@ -771,12 +814,12 @@ EOF
 
 # Add closing bracket to FILE_MAIN
 echo "Adding closing bracket to main file."
-echo "}" >> $FOLDER_ENTERPRISE_SCALE/$FILE_MAIN
+echo "}" >> $DIRECTORY_ENTERPRISE_SCALE/$FILE_MAIN
 
 rm $JSON_FILE > /dev/null 2>&1
 
 # Format all Terraform files
-if ! terraform -chdir=$FOLDER_ENTERPRISE_SCALE fmt > /dev/null 2>&1; then
+if ! terraform -chdir=$DIRECTORY_ENTERPRISE_SCALE fmt > /dev/null 2>&1; then
   echo "An error occurred while formatting Terraform files. Please check all files for syntax errors."
 else
   echo "Formatting Terraform files."
