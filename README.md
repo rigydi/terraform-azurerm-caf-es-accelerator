@@ -61,6 +61,7 @@ Please read the next chapters for detailed instructions.
   - Resource Group
   - Storage Account
   - Blob Container
+  - Key Vault
 
 **9) Terraform State File**
 - In the last step of the installation procedure, the installation script will configure the [Azure Backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm) to host the [Terraform state file](https://developer.hashicorp.com/terraform/language/state).
