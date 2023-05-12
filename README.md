@@ -53,7 +53,7 @@ Please read the next chapters for detailed instructions.
 - Execute **ignite.sh** to download the installation logic.
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
-> ./**01_setup_bridgehead.sh** --client_id 'Service Principal Application/Client ID' --client_secret 'Service Principal Secret' --tenant_id 'Azure Active Directory Tenant ID' --subscription_id 'Subscription ID for Terraform Azure Backend'
+> ./**01_setup_bridgehead.sh** --client_id 'Service Principal Application/Client ID' --client_secret 'Service Principal Secret' --tenant_id 'Azure Active Directory Tenant ID' --subscription_id 'Subscription ID for Terraform Azure Backend' --environment 'e.g. dev|stage|prod'
 
 
 **8) Azure Resources für Backend**
