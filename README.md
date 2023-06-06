@@ -50,7 +50,6 @@ Please read the next chapters for detailed instructions.
 - Create a Service Principal [secret](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#service-principal-authentication).
 
 **7) Installation**
-- Execute **ignite.sh** to download the installation logic.
 - Edit **bootstrap.yaml** according to your needs.
 - Start the installation script by executing:
 > ./**01_setup_bridgehead.sh** --client_id 'Service Principal Application/Client ID' --client_secret 'Service Principal Secret' --tenant_id 'Azure Active Directory Tenant ID' --subscription_id 'Subscription ID for Terraform Azure Backend' --environment 'e.g. dev|stage|prod'
